@@ -968,7 +968,11 @@ const WapuuChatApp = () => {
 				>
 					<div className="hw-chat-header">
 						<h2 id="hw-chat-title">
-							{ __( 'Hey Wapuu! 💛', 'hey-wapuu' ) }
+							{ sprintf(
+								/* translators: %s: user first name */
+								__( 'Hey %s! 💛', 'hey-wapuu' ),
+								user.firstName
+							) }
 						</h2>
 						<div className="hw-header-actions">
 							<button

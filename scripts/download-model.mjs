@@ -1,6 +1,6 @@
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import https from 'https';
 
 const MODEL_ID = 'Xenova/all-MiniLM-L6-v2';
 const FILES = [
@@ -13,44 +13,35 @@ const FILES = [
 
 const BASE_URL = `https://huggingface.co/${MODEL_ID}/resolve/main/`;
 
-async function downloadFile(url, dest) {
-	const dir = path.dirname(dest);
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir, { recursive: true });
-	}
-
-	return new Promise((resolve, reject) => {
-		const file = fs.createWriteStream(dest);
-		https.get(url, (response) => {
-			if (response.statusCode !== 200) {
-				reject(new Error(`Failed to download ${url}: ${response.statusCode}`));
-				return;
-			}
-			response.pipe(file);
-			file.on('finish', () => {
-				file.close();
-				resolve();
-			});
-		}).on('error', (err) => {
-			fs.unlink(dest, () => {});
-			reject(err);
-		});
-	});
-}
-
 async function main() {
 	const targetDir = path.join(process.cwd(), 'models', 'all-MiniLM-L6-v2');
-	console.log(`🚀 Hey Wapuu: Downloading model files to ${targetDir}...`);
+	
+	console.log(`🚀 Hey Wapuu: Ensuring model files are in ${targetDir}...`);
 
 	for (const file of FILES) {
 		const url = BASE_URL + file;
 		const dest = path.join(targetDir, file);
+		const fileDir = path.dirname(dest);
+
+		if (!fs.existsSync(fileDir)) {
+			fs.mkdirSync(fileDir, { recursive: true });
+		}
+		
+		if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+			console.log(`✅ ${file} already exists.`);
+			continue;
+		}
+
 		console.log(`📥 Downloading: ${file}...`);
-		await downloadFile(url, dest);
+		try {
+			execSync(`curl -L -f -s -S "${url}" -o "${dest}"`, { stdio: 'inherit' });
+		} catch (err) {
+			console.error(`❌ Failed to download ${file}. Make sure you have an internet connection.`);
+			process.exit(1);
+		}
 	}
 
 	console.log('✅ BOOM! Model files are now safe and sound in the models/ folder!');
 }
 
 main().catch(console.error);
-
