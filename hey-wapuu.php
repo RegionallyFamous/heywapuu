@@ -15,6 +15,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Check for minimum requirements.
+ */
+function hey_wapuu_check_requirements() {
+	if ( version_compare( $GLOBALS['wp_version'], '6.3', '<' ) ) {
+		add_action( 'admin_notices', function() {
+			echo '<div class="error"><p>' . esc_html__( 'Hey Wapuu requires WordPress 6.3 or higher to work its magic!', 'hey-wapuu' ) . '</p></div>';
+		} );
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Initialize the plugin.
+ */
+function hey_wapuu_init() {
+	if ( ! hey_wapuu_check_requirements() ) {
+		return;
+	}
+	load_plugin_textdomain( 'hey-wapuu', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+add_action( 'init', 'hey_wapuu_init' );
+
+/**
  * Enqueue administrative assets.
  */
 function hey_wapuu_enqueue_assets() {
@@ -61,11 +85,18 @@ function hey_wapuu_enqueue_assets() {
 	$post_counts  = wp_count_posts();
 	$theme        = wp_get_theme();
 	$screen       = get_current_screen();
+	$comment_counts = wp_count_comments();
+	$plugins      = get_plugins();
+	$active_plugins = get_option( 'active_plugins' );
+	$media_counts = wp_count_attachments();
+	$updates      = get_core_updates();
+	$has_updates  = ! empty( $updates ) && 'latest' !== $updates[0]->response;
 	
 	$config = array(
 		'pluginUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) ),
-		'workerUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/nlu-worker.js' ),
+		'workerUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/nlu-worker.js?ver=' . $asset_file['version'] ),
 		'modelUrl'  => esc_url_raw( plugin_dir_url( __FILE__ ) . 'models/' ),
+		'embeddingsUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/embeddings.json?ver=' . $asset_file['version'] ),
 		'nonce'     => wp_create_nonce( 'hey_wapuu_nonce' ),
 		'user' => array(
 			'firstName' => esc_html( $current_user->user_firstname ?: $current_user->display_name ),
@@ -73,10 +104,18 @@ function hey_wapuu_enqueue_assets() {
 			'role'      => esc_html( (string) ( reset($current_user->roles) ?: 'subscriber' ) ),
 		),
 		'site' => array(
-			'name'       => esc_html( get_bloginfo( 'name' ) ),
-			'postCount'  => (int) $post_counts->publish,
-			'draftCount' => (int) $post_counts->draft,
-			'themeName'  => esc_html( $theme->get( 'Name' ) ),
+			'name'          => esc_html( get_bloginfo( 'name' ) ),
+			'url'           => esc_url( get_home_url() ),
+			'postCount'     => (int) $post_counts->publish,
+			'draftCount'    => (int) $post_counts->draft,
+			'themeName'     => esc_html( $theme->get( 'Name' ) ),
+			'commentCount'  => (int) $comment_counts->approved,
+			'pendingComments' => (int) $comment_counts->moderated,
+			'pluginCount'   => count( $plugins ),
+			'activePlugins' => count( $active_plugins ),
+			'mediaCount'    => (int) $media_counts->inherit, // attachments are 'inherit'
+			'hasUpdates'    => (bool) $has_updates,
+			'locale'        => get_locale(),
 		),
 		'context' => array(
 			'screenId'  => $screen ? esc_js( $screen->id ) : '',
@@ -88,6 +127,20 @@ function hey_wapuu_enqueue_assets() {
 	wp_localize_script( 'hey-wapuu-script', 'heyWapuuConfig', $config );
 }
 add_action( 'admin_enqueue_scripts', 'hey_wapuu_enqueue_assets' );
+
+/**
+ * Add action links to the plugin list.
+ *
+ * @param array $links Existing links.
+ * @return array Modified links.
+ */
+function hey_wapuu_action_links( $links ) {
+	$new_links = array(
+		'<a href="https://github.com/regionallyfamous/heywapuu" target="_blank">' . __( 'Support', 'hey-wapuu' ) . '</a>',
+	);
+	return array_merge( $links, $new_links );
+}
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'hey_wapuu_action_links' );
 
 /**
  * Cleanup on deactivation.

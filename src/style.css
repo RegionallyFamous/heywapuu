@@ -178,6 +178,7 @@
 }
 
 #hey-wapuu-root .hw-clear-btn,
+#hey-wapuu-root .hw-help-btn,
 #hey-wapuu-root .hw-close-btn {
 	background: rgba(255,255,255,0.1);
 	border: none;
@@ -194,6 +195,7 @@
 }
 
 #hey-wapuu-root .hw-clear-btn:hover,
+#hey-wapuu-root .hw-help-btn:hover,
 #hey-wapuu-root .hw-close-btn:hover {
 	background: rgba(255,255,255,0.2);
 	transform: scale(1.1);

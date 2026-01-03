@@ -1,3 +1,5 @@
+/* global self */
+/* eslint-disable no-console */
 import { pipeline, env } from '@huggingface/transformers';
 import { findBestMatches } from './matcher.js';
 
@@ -12,87 +14,128 @@ let commandEmbeddings = null;
 
 /**
  * Handle incoming messages from the UI thread
+ *
+ * @param {MessageEvent} event
  */
-self.onmessage = async (event) => {
+self.onmessage = async ( event ) => {
 	const { type, data } = event.data;
 
 	try {
-		switch (type) {
+		switch ( type ) {
 			case 'init':
-				await initWorker(data.embeddingsUrl, data.modelUrl);
+				await initWorker( data.embeddingsUrl, data.modelUrl );
 				break;
 			case 'query':
-				await handleInference(data.text, data.context);
+				await handleInference( data.text, data.context );
 				break;
 		}
-	} catch (error) {
-		console.error('Worker Error:', error);
-		self.postMessage({ type: 'error', data: { message: error.message } });
+	} catch ( error ) {
+		console.error( 'Worker Error:', error );
+		self.postMessage( { type: 'error', data: { message: error.message } } );
 	}
 };
 
 /**
  * Initialize the ML brain
+ *
+ * @param {string} embeddingsUrl
+ * @param {string} modelUrl
  */
-async function initWorker(embeddingsUrl, modelUrl) {
+async function initWorker( embeddingsUrl, modelUrl ) {
 	try {
-		self.postMessage({ type: 'status', data: { status: 'loading', message: 'I\'m opening my big book of WordPress magic! 📖✨' } });
+		self.postMessage( {
+			type: 'status',
+			data: {
+				status: 'loading',
+			},
+		} );
 
-		if (modelUrl) {
+		if ( modelUrl ) {
 			env.localModelPath = modelUrl;
 		}
 
 		// Load pre-computed embeddings
-		const response = await fetch(embeddingsUrl);
-		if (!response.ok) throw new Error('Could not load embeddings');
+		const response = await fetch( embeddingsUrl );
+		if ( ! response.ok ) {
+			throw new Error( 'Could not load embeddings' );
+		}
 		commandEmbeddings = await response.json();
 
 		// Load the transformer pipeline
-		extractor = await pipeline('feature-extraction', 'all-MiniLM-L6-v2', {
+		extractor = await pipeline( 'feature-extraction', 'all-MiniLM-L6-v2', {
 			dtype: 'fp32',
-			progress_callback: (progress) => {
-				if (progress.status === 'downloading') {
-					const percent = progress.total 
-						? `${Math.round(progress.loaded / progress.total * 100)}%` 
-						: `${(progress.loaded / 1024 / 1024).toFixed(1)}MB`;
-					
-					self.postMessage({ 
-						type: 'status', 
-						data: { 
-							status: 'downloading', 
-							message: `I'm reading my notes! ${percent} ready! 📚✨` 
-						} 
-					});
-				}
-			}
-		});
+			progress_callback: ( progress ) => {
+				if ( progress.status === 'downloading' ) {
+					const percent = progress.total
+						? `${ Math.round(
+								( progress.loaded / progress.total ) * 100
+						  ) }%`
+						: `${ ( progress.loaded / 1024 / 1024 ).toFixed(
+								1
+						  ) }MB`;
 
-		self.postMessage({ type: 'status', data: { status: 'ready', message: 'BOOM! I\'m ready to help you build something amazing! 🚀' } });
-	} catch (error) {
-		console.error('Worker Init Error:', error);
-		self.postMessage({ type: 'status', data: { status: 'error', message: 'Oopsie! My brain had a little hiccup. Can we try again? 🙃' } });
+					self.postMessage( {
+						type: 'status',
+						data: {
+							status: 'downloading',
+							percent,
+						},
+					} );
+				}
+			},
+		} );
+
+		self.postMessage( {
+			type: 'status',
+			data: {
+				status: 'ready',
+			},
+		} );
+	} catch ( error ) {
+		console.error( 'Worker Init Error:', error );
+		self.postMessage( {
+			type: 'status',
+			data: {
+				status: 'error',
+			},
+		} );
 	}
 }
 
 /**
  * Perform semantic search
+ *
+ * @param {string} text
+ * @param {string} context
  */
-async function handleInference(text, context) {
-	if (!extractor || !commandEmbeddings) return;
+async function handleInference( text, context ) {
+	if ( ! extractor || ! commandEmbeddings ) {
+		return;
+	}
 
 	try {
 		// Generate embedding for query
-		const output = await extractor(text, {
+		const output = await extractor( text, {
 			pooling: 'mean',
 			normalize: true,
-		});
+		} );
 
-		const queryEmbedding = Array.from(output.data);
-		const matches = findBestMatches(queryEmbedding, commandEmbeddings, context);
+		const queryEmbedding = Array.from( output.data );
+		const matches = findBestMatches(
+			queryEmbedding,
+			commandEmbeddings,
+			context
+		);
 
-		self.postMessage({ type: 'results', data: { matches } });
-	} catch (error) {
-		console.error('Inference Error:', error);
-		self.postMessage({ type: 'error', data: { message: 'I got a bit confused by that one! Maybe try saying it a different way? I\'m still learning! 🤔' } });
+		self.postMessage( { type: 'results', data: { matches } } );
+	} catch ( error ) {
+		console.error( 'Inference Error:', error );
+		self.postMessage( {
+			type: 'error',
+			data: {
+				message:
+					"I got a bit confused by that one! Maybe try saying it a different way? I'm still learning! 🤔",
+			},
+		} );
 	}
 }
