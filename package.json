@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "concurrently \"wp-scripts start --config webpack.config.cjs\" \"chokidar 'src/commands.js' -c 'npm run generate-embeddings'\" \"chokidar 'build/**/*' 'hey-wapuu.php' 'src/style.css' -c 'npm run package'\"",
-    "build": "wp-scripts build --config webpack.config.cjs && npm run generate-embeddings && npm run package",
+    "build": "npm run download-model && wp-scripts build --config webpack.config.cjs && npm run generate-embeddings && npm run package",
+    "download-model": "node scripts/download-model.mjs",
     "generate-embeddings": "node scripts/generate-embeddings.mjs",
     "package": "rm -f hey-wapuu.zip && mkdir -p dist/hey-wapuu && cp hey-wapuu.php readme.txt dist/hey-wapuu/ && cp -r build dist/hey-wapuu/ && cp -r languages dist/hey-wapuu/ && cp -r models dist/hey-wapuu/ && cd dist && zip -rq ../hey-wapuu.zip hey-wapuu && cd .. && rm -rf dist",
     "lint:js": "wp-scripts lint-js",
