@@ -36,7 +36,7 @@ self.onmessage = async (event) => {
  */
 async function initWorker(embeddingsUrl, modelUrl) {
 	try {
-		self.postMessage({ type: 'status', data: { status: 'loading', message: 'Wait for it... I\'m warming up my super-brain! 🧠✨' } });
+		self.postMessage({ type: 'status', data: { status: 'loading', message: 'I\'m opening my big book of WordPress magic! 📖✨' } });
 
 		if (modelUrl) {
 			env.localModelPath = modelUrl;
@@ -60,7 +60,7 @@ async function initWorker(embeddingsUrl, modelUrl) {
 						type: 'status', 
 						data: { 
 							status: 'downloading', 
-							message: `I'm loading up my imagination! ${percent} ready! 📚📥` 
+							message: `I'm reading my notes! ${percent} ready! 📚✨` 
 						} 
 					});
 				}
