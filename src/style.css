@@ -49,6 +49,7 @@
 	color: white;
 	line-height: 1;
 	animation: hw-breathe 4s infinite ease-in-out;
+	text-align: center;
 }
 
 @keyframes hw-breathe {
@@ -60,9 +61,10 @@
 	background: white;
 	color: var(--hw-primary);
 	border-color: var(--hw-primary);
-	font-size: 40px;
+	font-size: 44px;
 	font-weight: 300;
 	animation: none;
+	padding-bottom: 4px; /* Optical adjustment for the × character */
 }
 
 #hey-wapuu-root .hw-summoner:hover {
@@ -177,7 +179,6 @@
 	align-items: center;
 }
 
-#hey-wapuu-root .hw-clear-btn,
 #hey-wapuu-root .hw-help-btn,
 #hey-wapuu-root .hw-close-btn {
 	background: rgba(255,255,255,0.1);
@@ -192,17 +193,37 @@
 	align-items: center;
 	justify-content: center;
 	transition: background 0.2s, transform 0.2s;
+	padding: 0;
+	line-height: 1;
+}
+
+#hey-wapuu-root .hw-clear-btn {
+	background: rgba(255,255,255,0.1);
+	border: none;
+	color: white;
+	cursor: pointer;
+	font-size: 11px;
+	font-weight: 600;
+	padding: 4px 10px;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.2s, transform 0.2s;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
 }
 
 #hey-wapuu-root .hw-clear-btn:hover,
 #hey-wapuu-root .hw-help-btn:hover,
 #hey-wapuu-root .hw-close-btn:hover {
 	background: rgba(255,255,255,0.2);
-	transform: scale(1.1);
+	transform: scale(1.05);
 }
 
 #hey-wapuu-root .hw-close-btn {
-	font-size: 20px;
+	font-size: 24px;
+	padding-bottom: 3px; /* Optical adjustment for the × character */
 }
 
 #hey-wapuu-root .hw-chat-content {

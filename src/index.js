@@ -599,18 +599,6 @@ const WapuuChatApp = () => {
 				);
 			}
 
-			const tips = [
-				__(
-					'Wapuu Tip: Did you know you can type / to find blocks even faster? 🚀',
-					'hey-wapuu'
-				),
-				__(
-					'Wapuu Tip: Keyboard shortcuts are like magic spells for building! 🪄',
-					'hey-wapuu'
-				),
-			];
-			const randomTip = tips[ Math.floor( Math.random() * tips.length ) ];
-
 			const greetings = [
 				sprintf(
 					/* translators: 1: time greeting (e.g. Good morning), 2: user first name, 3: site name, 4: contextual note */
@@ -695,8 +683,6 @@ const WapuuChatApp = () => {
 						site.mediaCount
 					);
 			}
-
-			welcomeText += `\n\n${ randomTip }`;
 
 			setTimeout(
 				() =>
@@ -874,11 +860,11 @@ const WapuuChatApp = () => {
 								topMatch.explanation
 							);
 						} else if ( rand === 1 ) {
-							reply = sprintf(
-								/* translators: %s: user first name */
-								__( 'You got it, %s! 🚀', 'hey-wapuu' ),
-								user.firstName
-							);
+								reply = sprintf(
+									/* translators: %s: user first name */
+									__( 'You got it, %s 🚀', 'hey-wapuu' ),
+									user.firstName
+								);
 						} else if ( rand === 2 ) {
 							reply = sprintf(
 								/* translators: 1: user first name, 2: command explanation */
@@ -991,7 +977,7 @@ const WapuuChatApp = () => {
 								className="hw-help-btn"
 								title={ __( 'What can I do?', 'hey-wapuu' ) }
 							>
-								❓
+								?
 							</button>
 							<button
 								onClick={ clearChat }
@@ -999,7 +985,7 @@ const WapuuChatApp = () => {
 								className="hw-clear-btn"
 								title={ __( 'Clear Chat', 'hey-wapuu' ) }
 							>
-								🧹
+								{ __( 'Clear', 'hey-wapuu' ) }
 							</button>
 							<button
 								onClick={ () => setIsOpen( false ) }
@@ -1030,43 +1016,6 @@ const WapuuChatApp = () => {
 										),
 									} }
 								/>
-								{ msg.isInitial && i === 0 && (
-									<div className="hw-quick-starts">
-										{ [
-											{
-												label: __(
-													'Start a story ✍️',
-													'hey-wapuu'
-												),
-												q: 'I want to write a blog post',
-											},
-											{
-												label: __(
-													'Tell me a joke! 😂',
-													'hey-wapuu'
-												),
-												q: 'tell me a joke',
-											},
-											{
-												label: __(
-													'Who are you? 💛',
-													'hey-wapuu'
-												),
-												q: 'who are you',
-											},
-										].map( ( qs, j ) => (
-											<button
-												key={ j }
-												className="hw-quick-btn"
-												onClick={ () =>
-													handleSend( qs.q )
-												}
-											>
-												{ qs.label }
-											</button>
-										) ) }
-									</div>
-								) }
 							</div>
 						) ) }
 						{ isThinking && (
@@ -1100,7 +1049,7 @@ const WapuuChatApp = () => {
 												{ sprintf(
 													/* translators: %s: command label */
 													__(
-														"Yes! Let's %s 🚀",
+														"Yes, let's %s 🚀",
 														'hey-wapuu'
 													),
 													cmd.label
