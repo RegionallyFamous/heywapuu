@@ -75,6 +75,92 @@ const WapuuChatApp = () => {
 
 	const context = useMemo( () => config.context || {}, [ config.context ] );
 
+	/**
+	 * Get a friendly, contextual message based on the current screen.
+	 */
+	const getScreenContext = useCallback( () => {
+		const screenId = context.screenId || '';
+		const isEditing = !! context.isEditing;
+
+		if ( screenId === 'site-editor' ) {
+			return {
+				name: __( 'the workshop', 'hey-wapuu' ),
+				nudge: __(
+					'Ready to change how our site looks? 🛠️✨',
+					'hey-wapuu'
+				),
+			};
+		}
+
+		if ( isEditing ) {
+			return {
+				name: __( 'this adventure', 'hey-wapuu' ),
+				nudge: __(
+					'I see we\'re working on a story! Need help with the words? ✍️✨',
+					'hey-wapuu'
+				),
+			};
+		}
+
+		if ( screenId === 'plugins' ) {
+			return {
+				name: __( 'the superpower lab', 'hey-wapuu' ),
+				nudge: __(
+					'Looking for new superpowers? I can help you find the best ones! 🦸‍♂️✨',
+					'hey-wapuu'
+				),
+			};
+		}
+
+		if ( screenId === 'upload' ) {
+			return {
+				name: __( 'the treasure chest', 'hey-wapuu' ),
+				nudge: __(
+					'Looking for a hidden gem in our pictures? 🖼️✨',
+					'hey-wapuu'
+				),
+			};
+		}
+
+		if ( screenId === 'dashboard' ) {
+			return {
+				name: __( 'headquarters', 'hey-wapuu' ),
+				nudge: __(
+					"Welcome back! Everything looks great on our site's map! 🗺️✨",
+					'hey-wapuu'
+				),
+			};
+		}
+
+		if ( screenId === 'themes' ) {
+			return {
+				name: __( 'the wardrobe', 'hey-wapuu' ),
+				nudge: __(
+					"Checking out our site's clothes? I love our current outfit! 👗✨",
+					'hey-wapuu'
+				),
+			};
+		}
+
+		if ( screenId === 'users' ) {
+			return {
+				name: __( 'the team house', 'hey-wapuu' ),
+				nudge: __(
+					'Managing our team of friends? I\'m here to help! 👥✨',
+					'hey-wapuu'
+				),
+			};
+		}
+
+		return {
+			name: __( 'this magic page', 'hey-wapuu' ),
+			nudge: __(
+				'I\'m all ready! What should we build together today? 🚀✨',
+				'hey-wapuu'
+			),
+		};
+	}, [ context ] );
+
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ input, setInput ] = useState( '' );
 	const [ messages, setMessages ] = useState( () => {
@@ -576,28 +662,8 @@ const WapuuChatApp = () => {
 				timeGreeting = __( 'Good evening', 'hey-wapuu' );
 			}
 
-			let contextNote = '';
-			if ( context.screenId === 'site-editor' ) {
-				contextNote = __(
-					"Oh, I see we're in the workshop! Ready to change our look? 🛠️✨",
-					'hey-wapuu'
-				);
-			} else if ( context.isEditing ) {
-				contextNote = __(
-					"I see we're working on a story! Want some help with the words? ✍️✨",
-					'hey-wapuu'
-				);
-			} else if ( context.screenId === 'plugins' ) {
-				contextNote = __(
-					'Ooh, looking for new superpowers? I can help you find the best ones! 🦸‍♂️✨',
-					'hey-wapuu'
-				);
-			} else if ( context.screenId === 'upload' ) {
-				contextNote = __(
-					'Looking for a hidden gem in our treasure chest? 🖼️✨',
-					'hey-wapuu'
-				);
-			}
+			const screenContext = getScreenContext();
+			const contextNote = screenContext.nudge;
 
 			const greetings = [
 				sprintf(
@@ -775,9 +841,14 @@ const WapuuChatApp = () => {
 
 					if ( data.status === 'ready' ) {
 						setWorkerStatus( 'ready' );
-						translatedMessage = __(
-							"BOOM! I'm ready to help you build something amazing! 🚀",
-							'hey-wapuu'
+						const screenContext = getScreenContext();
+						translatedMessage = sprintf(
+							/* translators: %s: screen name */
+							__(
+								"I've finished reading my notes! 📚 Now that we're at **%s**, I'm ready for anything! 🚀✨",
+								'hey-wapuu'
+							),
+							screenContext.name
 						);
 					} else if ( data.status === 'loading' ) {
 						translatedMessage = __(
