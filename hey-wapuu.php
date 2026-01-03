@@ -66,6 +66,7 @@ function hey_wapuu_enqueue_assets() {
 		'pluginUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) ),
 		'workerUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/nlu-worker.js' ),
 		'modelUrl'  => esc_url_raw( plugin_dir_url( __FILE__ ) . 'models/' ),
+		'nonce'     => wp_create_nonce( 'hey_wapuu_nonce' ),
 		'user' => array(
 			'firstName' => esc_html( $current_user->user_firstname ?: $current_user->display_name ),
 			'nickname'  => esc_html( $current_user->nickname ),
@@ -92,7 +93,7 @@ add_action( 'admin_enqueue_scripts', 'hey_wapuu_enqueue_assets' );
  * Cleanup on deactivation.
  */
 function hey_wapuu_deactivate() {
-	// Any cleanup tasks go here
+	// Flush rewrite rules for safety.
 	flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'hey_wapuu_deactivate' );

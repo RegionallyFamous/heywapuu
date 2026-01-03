@@ -7,6 +7,7 @@ export function cosineSimilarity(vecA, vecB) {
 	let normB = 0;
 	
 	const len = vecA.length;
+	// Use local variables for speed
 	for (let i = 0; i < len; i++) {
 		const a = vecA[i];
 		const b = vecB[i];
@@ -30,22 +31,15 @@ export function findBestMatches(queryEmbedding, commandEmbeddings, currentContex
 		const cmd = commandEmbeddings[i];
 		let bestScore = 0;
 
-		if (cmd.descriptionEmbeddings) {
-			// Newer structure with descriptionEmbeddings array
-			const descLen = cmd.descriptionEmbeddings.length;
+		// Handle both new and old embedding structures
+		const descEmbeds = cmd.descriptionEmbeddings || cmd.embeddings || (cmd.embedding ? [cmd.embedding] : null);
+		
+		if (descEmbeds) {
+			const descLen = descEmbeds.length;
 			for (let j = 0; j < descLen; j++) {
-				const score = cosineSimilarity(queryEmbedding, cmd.descriptionEmbeddings[j]);
+				const score = cosineSimilarity(queryEmbedding, descEmbeds[j]);
 				if (score > bestScore) bestScore = score;
 			}
-		} else if (cmd.embeddings) {
-			// Compatibility with old structure
-			const embLen = cmd.embeddings.length;
-			for (let j = 0; j < embLen; j++) {
-				const score = cosineSimilarity(queryEmbedding, cmd.embeddings[j]);
-				if (score > bestScore) bestScore = score;
-			}
-		} else if (cmd.embedding) {
-			bestScore = cosineSimilarity(queryEmbedding, cmd.embedding);
 		}
 		
 		// Boost score if the command context matches current context

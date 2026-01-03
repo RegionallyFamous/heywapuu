@@ -62,6 +62,17 @@ const WapuuChatApp = () => {
 	const allRegisteredCommands = useSelect((select) => select('core/commands').getCommands(), []);
 
 	/**
+	 * Seasonal Icon Logic
+	 */
+	const seasonalIcon = useMemo(() => {
+		const month = new Date().getMonth();
+		if (month === 11) return '🎄'; // December
+		if (month === 9) return '🎃';  // October
+		if (month === 1) return '💖';  // February
+		return '💬';
+	}, []);
+
+	/**
 	 * Subtle audio feedback
 	 */
 	const playPop = useCallback(() => {
@@ -156,6 +167,7 @@ const WapuuChatApp = () => {
 		setWapuuMood('celebrate');
 		
 		sessionStorage.setItem('hey_wapuu_arrival', JSON.stringify({
+			id: commandId,
 			label: cmd.label,
 			time: Date.now()
 		}));
@@ -219,6 +231,11 @@ const WapuuChatApp = () => {
 			recognitionRef.current.onerror = () => setIsListening(false);
 			recognitionRef.current.onend = () => setIsListening(false);
 		}
+		return () => {
+			if (recognitionRef.current) {
+				recognitionRef.current.stop();
+			}
+		};
 	}, [handleSend]);
 
 	// Persistence & Arrival Awareness
@@ -226,10 +243,20 @@ const WapuuChatApp = () => {
 		const arrivalData = sessionStorage.getItem('hey_wapuu_arrival');
 		if (arrivalData) {
 			try {
-				const { label, time } = JSON.parse(arrivalData);
+				const { id, label, time } = JSON.parse(arrivalData);
 				if (Date.now() - time < 60000) {
 					const cleanLabel = label.replace(/✍️|🏠|📝|🖼️|📤|👗|🛠️|🗺️|👥|➕|💬|🦸‍♂️|🏷️|🖐️|🌍|😂|💛/g, '').trim();
-					const arrivalMessage = sprintf(__('We made it! 🚀 We\'re at our destination: **%s**! Ready to start some magic? ✨', 'hey-wapuu'), cleanLabel);
+					
+					// Page-specific contextual arrival messages
+					let arrivalMessage = sprintf(__('We made it! 🚀 We\'re at our destination: **%s**! Ready to start some magic? ✨', 'hey-wapuu'), cleanLabel);
+					
+					if (id === 'core/add-new-post') {
+						arrivalMessage = __('We made it! ✍️ This is where we write our magic adventures. Tell me what you want to write about!', 'hey-wapuu');
+					} else if (id === 'core/open-media-library') {
+						arrivalMessage = __('Ooh, look at all these treasures! 🖼️ Want to add something new or find a specific picture?', 'hey-wapuu');
+					} else if (id === 'core/open-site-editor') {
+						arrivalMessage = __('We\'re in the workshop! 🛠️ This is where the big magic happens. What should we change first?', 'hey-wapuu');
+					}
 					
 					setTimeout(() => {
 						setMessages(prev => [...prev, { role: 'ai', text: arrivalMessage }]);
@@ -251,6 +278,8 @@ const WapuuChatApp = () => {
 			let contextNote = '';
 			if (context.screenId === 'site-editor') contextNote = __(' Oh, I see we\'re in the workshop! Ready to change our look? 🛠️✨', 'hey-wapuu');
 			else if (context.isEditing) contextNote = __(' I see we\'re working on a story! Want some help with the words? ✍️✨', 'hey-wapuu');
+			else if (context.screenId === 'plugins') contextNote = __(' Ooh, looking for new superpowers? I can help you find the best ones! 🦸‍♂️✨', 'hey-wapuu');
+			else if (context.screenId === 'upload') contextNote = __(' Looking for a hidden gem in our treasure chest? 🖼️✨', 'hey-wapuu');
 
 			const tips = [
 				__('Wapuu Tip: Did you know you can type / to find blocks even faster? 🚀', 'hey-wapuu'),
@@ -273,7 +302,7 @@ const WapuuChatApp = () => {
 
 			setTimeout(() => setMessages([{ role: 'ai', text: welcomeText, isInitial: true }]), 300);
 		}
-	}, []); // Only on mount
+	}, []);
 
 	// History and Audio sync
 	useEffect(() => {
@@ -378,13 +407,19 @@ const WapuuChatApp = () => {
 				aria-haspopup="dialog"
 				aria-label={isOpen ? __('Close Wapuu Chat', 'hey-wapuu') : __('Open Wapuu Chat', 'hey-wapuu')}
 			>
-				{isOpen ? '×' : '💬'}
+				{isOpen ? '×' : seasonalIcon}
 			</button>
 
 			{isOpen && (
-				<div className="hw-chat-window" role="dialog" aria-modal="true" aria-label={__('Wapuu Assistant', 'hey-wapuu')} ref={chatWindowRef}>
+				<div 
+					className="hw-chat-window" 
+					role="dialog" 
+					aria-modal="true" 
+					aria-label={__('Wapuu Assistant', 'hey-wapuu')} 
+					ref={chatWindowRef}
+				>
 					<div className="hw-chat-header">
-						<h2>{__('Hey Wapuu! 💛', 'hey-wapuu')}</h2>
+						<h2 id="hw-chat-title">{__('Hey Wapuu! 💛', 'hey-wapuu')}</h2>
 						<div className="hw-header-actions">
 							<button onClick={clearChat} aria-label={__('Clear Chat', 'hey-wapuu')} className="hw-clear-btn" title={__('Clear Chat', 'hey-wapuu')}>🧹</button>
 							<button onClick={() => setIsOpen(false)} aria-label={__('Close Chat', 'hey-wapuu')} className="hw-close-btn">×</button>
