@@ -1,0 +1,33 @@
+{
+  "name": "hey-wapuu",
+  "version": "1.0.0",
+  "description": "Natural language search for the WordPress Command Palette.",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "concurrently \"wp-scripts start --config webpack.config.cjs\" \"chokidar 'src/commands.js' -c 'npm run generate-embeddings'\" \"chokidar 'build/**/*' 'hey-wapuu.php' 'src/style.css' -c 'npm run package'\"",
+    "build": "wp-scripts build --config webpack.config.cjs && npm run generate-embeddings && npm run package",
+    "generate-embeddings": "node scripts/generate-embeddings.mjs",
+    "package": "rm -f hey-wapuu.zip && mkdir -p dist/hey-wapuu && cp hey-wapuu.php readme.txt dist/hey-wapuu/ && cp -r build dist/hey-wapuu/ && cp -r languages dist/hey-wapuu/ && cp -r models dist/hey-wapuu/ && cd dist && zip -rq ../hey-wapuu.zip hey-wapuu && cd .. && rm -rf dist",
+    "lint:js": "wp-scripts lint-js",
+    "test:unit": "wp-scripts test-unit-js"
+  },
+  "author": "Regionally Famous",
+  "license": "GPL-2.0-or-later",
+  "dependencies": {
+    "@wordpress/commands": "latest",
+    "@wordpress/components": "latest",
+    "@wordpress/data": "latest",
+    "@wordpress/element": "latest",
+    "@wordpress/i18n": "latest",
+    "@wordpress/plugins": "latest"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "latest",
+    "@wordpress/scripts": "latest",
+    "ajv": "latest",
+    "chokidar-cli": "latest",
+    "concurrently": "latest",
+    "fuse.js": "latest"
+  }
+}
