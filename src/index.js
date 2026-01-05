@@ -309,6 +309,7 @@ const WapuuChatApp = () => {
 	const [ isListening, setIsListening ] = useState( false );
 	const [ wapuuMood, setWapuuMood ] = useState( 'happy' ); // happy, thinking, wiggle, celebrate
 	const [ isGlowing, setIsGlowing ] = useState( false );
+	const [ bootTime, setBootTime ] = useState( Date.now() );
 
 	const workerRef = useRef( null );
 	const scrollRef = useRef( null );
@@ -318,6 +319,25 @@ const WapuuChatApp = () => {
 	const recognitionRef = useRef( null );
 	const getScreenContextRef = useRef( getScreenContext );
 	const debounceTimerRef = useRef( null );
+
+	/**
+	 * Watchdog: Detect if worker is stuck
+	 */
+	const isStuck =
+		( workerStatus === 'initializing' || workerStatus === 'loading' ) &&
+		Date.now() - bootTime > 15000;
+
+	/**
+	 * Force Restart
+	 */
+	const forceRestart = useCallback( () => {
+		if ( workerRef.current ) {
+			workerRef.current.terminate();
+			workerRef.current = null;
+		}
+		setWorkerStatus( 'idle' );
+		setBootTime( Date.now() );
+	}, [] );
 
 	/**
 	 * Sidebar Scraper: Learn custom menu items
@@ -1229,269 +1249,215 @@ const WapuuChatApp = () => {
 		}
 	}, [ isOpen ] );
 
-	// Web Worker Lifecycle
+	/**
+	 * Web Worker Lifecycle
+	 */
 	useEffect( () => {
 		const channel =
 			typeof window.BroadcastChannel !== 'undefined'
 				? new BroadcastChannel( 'hey_wapuu_sync' )
 				: null;
 
+		let bootTimeout = null;
+
 		const initWorker = () => {
-			// CRITICAL: Check the ref directly to avoid dependency loops
+			// eslint-disable-next-line no-console
+			console.log( 'Wapuu Trace: Initializing Worker...' );
+
 			if ( workerRef.current || ! window.Worker ) {
 				return;
 			}
 
 			setWorkerStatus( 'initializing' );
-			workerRef.current = new Worker( heyWapuuConfig.workerUrl );
-			workerRef.current.postMessage( {
-				type: 'init',
-				data: {
-					embeddingsUrl: heyWapuuConfig.embeddingsUrl,
-					modelUrl: heyWapuuConfig.modelUrl,
-					version: heyWapuuConfig.version,
-				},
-			} );
 
-			workerRef.current.onmessage = ( event ) => {
-				const { type, data } = event.data;
-				if ( type === 'status' ) {
-					let translatedMessage = data.message;
+			try {
+				// Use the clean URL without query strings for better compatibility
+				const workerUrl = heyWapuuConfig.workerUrl.split( '?' )[ 0 ];
+				workerRef.current = new Worker( workerUrl, { type: 'module' } );
 
-					if ( data.status === 'ready' ) {
-						setWorkerStatus( 'ready' );
-						setLoadingProgress( 100 );
-						setIsReadyNotification( true );
-						setTimeout(
-							() => setIsReadyNotification( false ),
-							3000
+				workerRef.current.postMessage( {
+					type: 'init',
+					data: {
+						embeddingsUrl: heyWapuuConfig.embeddingsUrl,
+						modelUrl: heyWapuuConfig.modelUrl,
+						version: heyWapuuConfig.version,
+					},
+				} );
+
+				workerRef.current.onmessage = ( event ) => {
+					const { type, data } = event.data;
+					if ( type === 'status' ) {
+						// eslint-disable-next-line no-console
+						console.log(
+							'Wapuu Trace: Worker Status ->',
+							data.status
 						);
 
-						// SYNC: Notify other tabs
-						channel?.postMessage( { type: 'ready' } );
-
-						const screenContext = getScreenContext();
-						translatedMessage = sprintf(
-							/* translators: %s: screen name */
-							__(
-								"I've finished reading my notes! 📚 Now that we're at **%s**, I'm ready for anything! 🚀✨",
-								'hey-wapuu'
-							),
-							screenContext.name
-						);
-					} else if ( data.status === 'loading' ) {
-						setWorkerStatus( 'loading' );
-						translatedMessage = data.message || __(
-							"I'm opening my big book of WordPress magic! 📖✨",
-							'hey-wapuu'
-						);
-					} else if ( data.status === 'downloading' ) {
-						setWorkerStatus( 'downloading' );
-						if ( data.percent ) {
-							const val = parseInt( data.percent, 10 );
-							if ( ! isNaN( val ) ) {
-								setLoadingProgress( val );
-								// SYNC: Share progress
-								channel?.postMessage( {
-									type: 'progress',
-									percent: val,
-								} );
+						if ( data.status === 'ready' ) {
+							setWorkerStatus( 'ready' );
+							setLoadingProgress( 100 );
+							setIsReadyNotification( true );
+							setTimeout(
+								() => setIsReadyNotification( false ),
+								3000
+							);
+							channel?.postMessage( { type: 'ready' } );
+						} else if ( data.status === 'loading' ) {
+							setWorkerStatus( 'loading' );
+						} else if ( data.status === 'downloading' ) {
+							setWorkerStatus( 'downloading' );
+							if ( data.percent ) {
+								const val = parseInt( data.percent, 10 );
+								if ( ! isNaN( val ) ) {
+									setLoadingProgress( val );
+									channel?.postMessage( {
+										type: 'progress',
+										percent: val,
+									} );
+								}
 							}
+						} else if ( data.status === 'error' ) {
+							setWorkerStatus( 'error' );
 						}
-						translatedMessage = sprintf(
-							/* translators: %s: percentage or size */
-							__(
-								"I'm reading my notes! %s ready! 📚✨",
-								'hey-wapuu'
-							),
-							data.percent || ''
-						);
-					} else if ( data.status === 'error' ) {
-						setWorkerStatus( 'error' );
-						translatedMessage = __(
-							'Oopsie! My brain had a little hiccup. Can we try again? 🙃',
-							'hey-wapuu'
-						);
-					}
-
-					setMessages( ( prev ) => {
-						const newMsgs = [ ...prev ];
-						if (
-							newMsgs.length > 0 &&
-							newMsgs[ newMsgs.length - 1 ].isStatus
-						) {
-							newMsgs[ newMsgs.length - 1 ] = {
-								role: 'ai',
-								text: translatedMessage,
-								isStatus: true,
-								hasTyped: true, // Status messages don't need typewriter
-							};
-							return newMsgs;
-						}
-						return [
+					} else if ( type === 'error' ) {
+						setIsThinking( false );
+						setMessages( ( prev ) => [
 							...prev,
 							{
 								role: 'ai',
-								text: translatedMessage,
-								isStatus: true,
-								hasTyped: true,
+								text: __(
+									"I got a bit confused by that one! Maybe try saying it a different way? I'm still learning! 🤔",
+									'hey-wapuu'
+								),
+								hasTyped: false,
 							},
-						];
-					} );
-				} else if ( type === 'error' ) {
-					setIsThinking( false );
-					setMessages( ( prev ) => [
-						...prev,
-						{
-							role: 'ai',
-							text: __(
-								"I got a bit confused by that one! Maybe try saying it a different way? I'm still learning! 🤔",
-								'hey-wapuu'
-							),
-							hasTyped: false,
-						},
-					] );
-				} else if ( type === 'results' ) {
-					setIsThinking( false );
-					setWapuuMood( 'wiggle' );
-					setMatches( data.matches );
-
-					const topMatch =
-						data.matches.length > 0
-							? commandRegistry.find(
-									( c ) => c.id === data.matches[ 0 ].id
-							  )
-							: null;
-					let reply;
-
-					if ( topMatch ) {
-						const rand = Math.floor( Math.random() * 4 );
-						if ( rand === 0 ) {
-							reply = sprintf(
-								/* translators: 1: user first name, 2: command explanation */
-								__(
-									'I can totally help with that, %1$s! %2$s ✨',
-									'hey-wapuu'
-								),
-								user.firstName,
-								topMatch.explanation
-							);
-						} else if ( rand === 1 ) {
-							reply = sprintf(
-								/* translators: %s: user first name */
-								__( 'You got it, %s 🚀', 'hey-wapuu' ),
-								user.firstName
-							);
-						} else if ( rand === 2 ) {
-							reply = sprintf(
-								/* translators: 1: user first name, 2: command explanation */
-								__(
-									'Ooh, I know exactly where that is, %1$s! %2$s 💛',
-									'hey-wapuu'
-								),
-								user.firstName,
-								topMatch.explanation
-							);
-						} else {
-							reply = sprintf(
-								/* translators: 1: user first name, 2: command explanation */
-								__(
-									'That sounds like a great idea, %1$s! %2$s 🌟',
-									'hey-wapuu'
-								),
-								user.firstName,
-								topMatch.explanation
-							);
-						}
-					} else {
-						const rand = Math.floor( Math.random() * 4 );
-						if ( rand === 0 ) {
-							reply = __(
-								"Hmm, I don't know that magic trick yet! 🎩 But I'm a super-fast learner. Try asking me to start a story or open the treasure chest!",
-								'hey-wapuu'
-							);
-						} else if ( rand === 1 ) {
-							reply = __(
-								"Whoopsie! My big book of WordPress magic doesn't have that page yet. 📖 Can we try one of these common spells instead?",
-								'hey-wapuu'
-							);
-						} else if ( rand === 2 ) {
-							reply = sprintf(
-								/* translators: %s: user first name */
-								__(
-									"I'm not quite sure how to do that, %s! 🙃 I'm still just a young Wapuu. Should we try one of these instead?",
-									'hey-wapuu'
-								),
-								user.firstName
-							);
-						} else {
-							reply = __(
-								"Ooh, that's a new one! 🌟 I haven't learned that magic yet. Want to see what I *can* do?",
-								'hey-wapuu'
-							);
-						}
-
-						// If no match, provide some fallback suggestions anyway
-						setMatches( [
-							{ id: 'core/add-new-post', score: 0.1 },
-							{ id: 'core/open-media-library', score: 0.1 },
-							{ id: 'wapuu/tell-joke', score: 0.1 },
 						] );
+					} else if ( type === 'results' ) {
+						setIsThinking( false );
+						setWapuuMood( 'wiggle' );
+						setMatches( data.matches );
+
+						const topMatch =
+							data.matches.length > 0
+								? commandRegistry.find(
+										( c ) => c.id === data.matches[ 0 ].id
+								  )
+								: null;
+						let reply;
+
+						if ( topMatch ) {
+							const rand = Math.floor( Math.random() * 4 );
+							if ( rand === 0 ) {
+								reply = sprintf(
+									/* translators: 1: user first name, 2: command explanation */
+									__(
+										'I can totally help with that, %1$s! %2$s ✨',
+										'hey-wapuu'
+									),
+									user.firstName,
+									topMatch.explanation
+								);
+							} else if ( rand === 1 ) {
+								reply = sprintf(
+									/* translators: %s: user first name */
+									__( 'You got it, %s 🚀', 'hey-wapuu' ),
+									user.firstName
+								);
+							} else if ( rand === 2 ) {
+								reply = sprintf(
+									/* translators: 1: user first name, 2: command explanation */
+									__(
+										'Ooh, I know exactly where that is, %1$s! %2$s 💛',
+										'hey-wapuu'
+									),
+									user.firstName,
+									topMatch.explanation
+								);
+							} else {
+								reply = sprintf(
+									/* translators: 1: user first name, 2: command explanation */
+									__(
+										'That sounds like a great idea, %1$s! %2$s 🌟',
+										'hey-wapuu'
+									),
+									user.firstName,
+									topMatch.explanation
+								);
+							}
+						} else {
+							const rand = Math.floor( Math.random() * 4 );
+							if ( rand === 0 ) {
+								reply = __(
+									"Hmm, I don't know that magic trick yet! 🎩 But I'm a super-fast learner. Try asking me to start a story or open the treasure chest!",
+									'hey-wapuu'
+								);
+							} else if ( rand === 1 ) {
+								reply = __(
+									"Whoopsie! My big book of WordPress magic doesn't have that page yet. 📖 Can we try one of these common spells instead?",
+									'hey-wapuu'
+								);
+							} else if ( rand === 2 ) {
+								reply = sprintf(
+									/* translators: %s: user first name */
+									__(
+										"I'm not quite sure how to do that, %s! 🙃 I'm still just a young Wapuu. Should we try one of these instead?",
+										'hey-wapuu'
+									),
+									user.firstName
+								);
+							} else {
+								reply = __(
+									"Ooh, that's a new one! 🌟 I haven't learned that magic yet. Want to see what I *can* do?",
+									'hey-wapuu'
+								);
+							}
+
+							setMatches( [
+								{ id: 'core/add-new-post', score: 0.1 },
+								{ id: 'core/open-media-library', score: 0.1 },
+								{ id: 'wapuu/tell-joke', score: 0.1 },
+							] );
+						}
+
+						setMessages( ( prev ) => [
+							...prev,
+							{ role: 'ai', text: reply, hasTyped: false },
+						] );
+						setTimeout( () => {
+							setWapuuMood( 'happy' );
+							setIsGlowing( false );
+						}, 1500 );
 					}
+				};
 
-					setMessages( ( prev ) => [
-						...prev,
-						{ role: 'ai', text: reply, hasTyped: false },
-					] );
-					setTimeout( () => {
-						setWapuuMood( 'happy' );
-						setIsGlowing( false );
-					}, 1500 );
-				}
-			};
-
-			// Handle worker unexpected termination
-			workerRef.current.onerror = () => {
-				setWorkerStatus( 'idle' ); // Allow re-init
+				workerRef.current.onerror = ( err ) => {
+					// eslint-disable-next-line no-console
+					console.error( 'Wapuu Trace: Worker Error ->', err );
+					setWorkerStatus( 'error' );
+				};
+			} catch ( e ) {
 				// eslint-disable-next-line no-console
-				console.error( 'Wapuu Worker crashed. Attempting recovery...' );
-			};
+				console.error( 'Wapuu Trace: Boot Exception ->', e );
+				setWorkerStatus( 'error' );
+			}
 		};
 
-		// Listen for sync messages from other tabs
-		if ( channel ) {
-			channel.onmessage = ( event ) => {
-				if ( event.data.type === 'ready' && workerStatus !== 'ready' ) {
-					setWorkerStatus( 'ready' );
-					setLoadingProgress( 100 );
-					setIsReadyNotification( true );
-					setTimeout( () => setIsReadyNotification( false ), 3000 );
-				} else if (
-					event.data.type === 'progress' &&
-					workerStatus !== 'ready'
-				) {
-					setLoadingProgress( event.data.percent );
-				}
-			};
-		}
-
-		// IDLE BOOT: Wait for the browser to be idle before starting the AI worker
-		if ( window.requestIdleCallback ) {
-			window.requestIdleCallback( () => initWorker(), { timeout: 2000 } );
-		} else {
-			setTimeout( initWorker, 1000 );
+		// Direct Boot if idle
+		if ( workerStatus === 'idle' ) {
+			bootTimeout = setTimeout( initWorker, 500 );
 		}
 
 		return () => {
-			if ( workerRef.current ) {
+			if ( bootTimeout ) {
+				clearTimeout( bootTimeout );
+			}
+			if ( workerRef.current && workerStatus === 'error' ) {
 				workerRef.current.terminate();
 				workerRef.current = null;
 			}
 			channel?.close();
 		};
-		// Only run once on mount
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [] );
+	}, [ workerStatus ] );
 
 	// Proactive suggestions based on context
 	useEffect( () => {
@@ -1605,6 +1571,9 @@ const WapuuChatApp = () => {
 	let inputPlaceholder = __( 'Talk to me…', 'hey-wapuu' );
 	if ( workerStatus !== 'ready' ) {
 		inputPlaceholder = __( 'Wapuu is reading…', 'hey-wapuu' );
+		if ( isStuck ) {
+			inputPlaceholder = __( 'Wapuu is stuck! Click to wake up…', 'hey-wapuu' );
+		}
 	} else if ( isListening ) {
 		inputPlaceholder = __( "I'm listening…", 'hey-wapuu' );
 	}
@@ -1614,7 +1583,13 @@ const WapuuChatApp = () => {
 			<button
 				ref={ summonerRef }
 				className={ summonerClassName }
-				onClick={ () => setIsOpen( ! isOpen ) }
+				onClick={ () => {
+					if ( isStuck ) {
+						forceRestart();
+					} else {
+						setIsOpen( ! isOpen );
+					}
+				} }
 				aria-expanded={ isOpen }
 				aria-haspopup="dialog"
 				aria-label={
@@ -1623,7 +1598,7 @@ const WapuuChatApp = () => {
 						: __( 'Open Wapuu Chat', 'hey-wapuu' )
 				}
 			>
-				{ isOpen ? '×' : seasonalIcon }
+				{ isStuck ? '🔄' : isOpen ? '×' : seasonalIcon }
 			</button>
 
 			{ isOpen && (
@@ -1638,13 +1613,24 @@ const WapuuChatApp = () => {
 				>
 					<div className="hw-chat-header">
 						<h2 id="hw-chat-title">
-							{ sprintf(
-								/* translators: %s: user first name */
-								__( 'Hey %s! 💛', 'hey-wapuu' ),
-								user.firstName
-							) }
+							{ isStuck
+								? __( 'Wake up, Wapuu!', 'hey-wapuu' )
+								: sprintf(
+										/* translators: %s: user first name */
+										__( 'Hey %s! 💛', 'hey-wapuu' ),
+										user.firstName
+								  ) }
 						</h2>
 						<div className="hw-header-actions">
+							{ isStuck && (
+								<button
+									onClick={ forceRestart }
+									className="hw-wake-btn"
+									title={ __( 'Force Restart AI', 'hey-wapuu' ) }
+								>
+									{ __( 'Wake Up', 'hey-wapuu' ) }
+								</button>
+							) }
 							<button
 								onClick={ () => handleSpecialAction( 'help' ) }
 								disabled={ workerStatus !== 'ready' }
