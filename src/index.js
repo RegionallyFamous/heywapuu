@@ -294,12 +294,14 @@ const WapuuChatApp = () => {
 		try {
 			const saved = sessionStorage.getItem( 'hey_wapuu_history' );
 			const parsed = saved ? JSON.parse( saved ) : [];
-			// Mark old messages as already typed
 			return parsed.map( ( m ) => ( { ...m, hasTyped: true } ) );
 		} catch ( e ) {
 			return [];
 		}
 	} );
+
+	// NEW: Explicit State Management to prevent collisions
+	const [ uiState, setUiState ] = useState( 'idle' ); // idle, searching, results, thinking, error
 	const [ matches, setMatches ] = useState( [] );
 	const [ dynamicCommands, setDynamicCommands ] = useState( [] );
 	const [ workerStatus, setWorkerStatus ] = useState( 'idle' );
@@ -415,8 +417,8 @@ const WapuuChatApp = () => {
 	 */
 	useEffect( () => {
 		if ( ! input.trim() ) {
-			// Only clear matches if we aren't currently showing results or thinking
-			if ( ! isThinking && messages.length > 0 && messages[ messages.length - 1 ].role !== 'ai' ) {
+			if ( uiState === 'searching' ) {
+				setUiState( 'idle' );
 				setMatches( [] );
 			}
 			return;
@@ -425,6 +427,8 @@ const WapuuChatApp = () => {
 		if ( workerStatus !== 'ready' ) {
 			return;
 		}
+
+		setUiState( 'searching' );
 
 		// Debounce to save CPU/Battery
 		if ( debounceTimerRef.current ) {
@@ -742,7 +746,8 @@ const WapuuChatApp = () => {
 			if ( ! overrideInput ) {
 				setInput( '' );
 			}
-			// Keep matches visible while thinking so the user can still click them
+
+			setUiState( 'thinking' );
 			setIsThinking( true );
 			setWapuuMood( 'thinking' );
 
@@ -830,18 +835,31 @@ const WapuuChatApp = () => {
 	);
 
 	/**
+	 * Unified Command Lookup
+	 */
+	const getCommandById = useCallback(
+		( id ) => {
+			return (
+				commandRegistry.find( ( c ) => c.id === id ) ||
+				dynamicCommands.find( ( c ) => c.id === id )
+			);
+		},
+		[ dynamicCommands ]
+	);
+
+	/**
 	 * Run matched command
 	 */
 	const runCommand = useCallback(
 		( commandId ) => {
-			// Find in registry OR dynamic commands
-			const cmd =
-				commandRegistry.find( ( c ) => c.id === commandId ) ||
-				dynamicCommands.find( ( c ) => c.id === commandId );
+			const cmd = getCommandById( commandId );
 
 			if ( ! cmd ) {
 				return;
 			}
+
+			// Clear matches after action
+			setMatches( [] );
 
 			if ( cmd.action ) {
 				handleSpecialAction( cmd.action );
@@ -1343,6 +1361,9 @@ const WapuuChatApp = () => {
 
 						if ( isLive ) {
 							setMatches( foundMatches );
+							setUiState(
+								foundMatches.length > 0 ? 'results' : 'searching'
+							);
 							if (
 								foundMatches.length > 0 &&
 								wapuuMood === 'happy'
@@ -1356,6 +1377,7 @@ const WapuuChatApp = () => {
 							return;
 						}
 
+						setUiState( 'idle' );
 						setIsThinking( false );
 						setWapuuMood( 'wiggle' );
 
@@ -1364,9 +1386,7 @@ const WapuuChatApp = () => {
 
 						const topMatch =
 							foundMatches.length > 0
-								? commandRegistry.find(
-										( c ) => c.id === foundMatches[ 0 ].id
-								  )
+								? getCommandById( foundMatches[ 0 ].id )
 								: null;
 						let reply;
 
@@ -1762,16 +1782,10 @@ const WapuuChatApp = () => {
 						) }
 					</div>
 
-					{ matches.length > 0 && (
+					{ ( uiState === 'results' || matches.length > 0 ) && (
 						<div className="hw-suggestions">
 							{ matches.map( ( match ) => {
-								const cmd =
-									commandRegistry.find(
-										( c ) => c.id === match.id
-									) ||
-									dynamicCommands.find(
-										( c ) => c.id === match.id
-									);
+								const cmd = getCommandById( match.id );
 								return cmd ? (
 									<button
 										key={ match.id }
