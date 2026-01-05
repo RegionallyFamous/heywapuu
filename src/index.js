@@ -742,7 +742,7 @@ const WapuuChatApp = () => {
 			if ( ! overrideInput ) {
 				setInput( '' );
 			}
-			setMatches( [] );
+			// Keep matches visible while thinking so the user can still click them
 			setIsThinking( true );
 			setWapuuMood( 'thinking' );
 
