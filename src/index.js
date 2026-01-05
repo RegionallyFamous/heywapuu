@@ -414,10 +414,15 @@ const WapuuChatApp = () => {
 	 * Live Search Logic
 	 */
 	useEffect( () => {
-		if ( ! input.trim() || workerStatus !== 'ready' ) {
-			if ( ! isThinking ) {
+		if ( ! input.trim() ) {
+			// Only clear matches if we aren't currently showing results or thinking
+			if ( ! isThinking && messages.length > 0 && messages[ messages.length - 1 ].role !== 'ai' ) {
 				setMatches( [] );
 			}
+			return;
+		}
+
+		if ( workerStatus !== 'ready' ) {
 			return;
 		}
 
@@ -1338,15 +1343,23 @@ const WapuuChatApp = () => {
 
 						if ( isLive ) {
 							setMatches( foundMatches );
-							if ( foundMatches.length > 0 && wapuuMood === 'happy' ) {
+							if (
+								foundMatches.length > 0 &&
+								wapuuMood === 'happy'
+							) {
 								setWapuuMood( 'thinking' );
-								setTimeout( () => setWapuuMood( 'happy' ), 600 );
+								setTimeout(
+									() => setWapuuMood( 'happy' ),
+									600
+								);
 							}
 							return;
 						}
 
 						setIsThinking( false );
 						setWapuuMood( 'wiggle' );
+
+						// Ensure matches are set even if empty (clears old ones)
 						setMatches( foundMatches );
 
 						const topMatch =
