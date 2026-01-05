@@ -8,7 +8,7 @@ env.allowLocalModels = true;
 env.localModelPath = ''; // Dynamic
 env.allowRemoteModels = false; // Security: force local only
 env.useBrowserCache = true; // Re-enable now that we have stable versioning
-env.useCustomCache = true;
+env.useCustomCache = false; // We use the standard browser Cache API, not a custom implementation
 
 // Performance optimizations for modern browsers
 if ( self.crossOriginIsolated ) {
