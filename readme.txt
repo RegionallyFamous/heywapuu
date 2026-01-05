@@ -4,7 +4,7 @@ Tags: assistant, chat, command palette, nlu, search
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.2
+Stable tag: 1.6.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,12 @@ No! All processing happens locally in your browser using Transformers.js.
 WordPress 6.3 and higher are required for full compatibility with the Command Palette API.
 
 == Changelog ==
+
+= 1.6.6 =
+* FIXED: Corrected author name to Regionally Famous.
+* IMPROVED: UI layout for suggestion buttons - moved to a fixed tray for better visibility.
+* IMPROVED: AI query logic to prevent redundant message generation during live search.
+* FIXED: Premature AI inference while typing.
 
 = 1.6.2 =
 * FIXED: Console error when audio is blocked by the browser.

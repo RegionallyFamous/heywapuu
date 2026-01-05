@@ -69,7 +69,11 @@ self.onmessage = async ( event ) => {
 						self.lastModelUrl
 					);
 				}
-				await handleInference( data.text, data.context );
+				await handleInference(
+					data.text,
+					data.context,
+					data.isLive || false
+				);
 				break;
 		}
 	} catch ( error ) {
@@ -209,10 +213,11 @@ async function handleLearn( commands ) {
 /**
  * Perform semantic search
  *
- * @param {string} text
- * @param {string} context
+ * @param {string}  text
+ * @param {string}  context
+ * @param {boolean} isLive
  */
-async function handleInference( text, context ) {
+async function handleInference( text, context, isLive = false ) {
 	if ( ! extractor || ! commandEmbeddings ) {
 		return;
 	}
@@ -235,7 +240,7 @@ async function handleInference( text, context ) {
 			context
 		);
 
-		self.postMessage( { type: 'results', data: { matches } } );
+		self.postMessage( { type: 'results', data: { matches, isLive } } );
 	} catch ( error ) {
 		console.error( 'Inference Error:', error );
 		self.postMessage( {

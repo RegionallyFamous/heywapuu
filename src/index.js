@@ -434,10 +434,11 @@ const WapuuChatApp = () => {
 						text: input,
 						context: context.postType || context.screenId,
 						dynamicCommands, // Pass the "learned" commands to the AI
+						isLive: true,
 					},
 				} );
 			}
-		}, 250 );
+		}, 400 );
 
 		return () => clearTimeout( debounceTimerRef.current );
 	}, [ input, workerStatus, dynamicCommands, context, isThinking ] );
@@ -1333,14 +1334,25 @@ const WapuuChatApp = () => {
 							},
 						] );
 					} else if ( type === 'results' ) {
+						const { matches: foundMatches, isLive } = data;
+
+						if ( isLive ) {
+							setMatches( foundMatches );
+							if ( foundMatches.length > 0 && wapuuMood === 'happy' ) {
+								setWapuuMood( 'thinking' );
+								setTimeout( () => setWapuuMood( 'happy' ), 600 );
+							}
+							return;
+						}
+
 						setIsThinking( false );
 						setWapuuMood( 'wiggle' );
-						setMatches( data.matches );
+						setMatches( foundMatches );
 
 						const topMatch =
-							data.matches.length > 0
+							foundMatches.length > 0
 								? commandRegistry.find(
-										( c ) => c.id === data.matches[ 0 ].id
+										( c ) => c.id === foundMatches[ 0 ].id
 								  )
 								: null;
 						let reply;
@@ -1735,49 +1747,50 @@ const WapuuChatApp = () => {
 								<span>.</span>
 							</div>
 						) }
-						{ matches.length > 0 && (
-							<div className="hw-suggestions">
-								{ matches.map( ( match ) => {
-									const cmd =
-										commandRegistry.find(
-											( c ) => c.id === match.id
-										) ||
-										dynamicCommands.find(
-											( c ) => c.id === match.id
-										);
-									return cmd ? (
-										<button
-											key={ match.id }
-											className="hw-match-card"
-											onClick={ () => {
-												runCommand( match.id );
-												setInput( '' );
-											} }
-										>
-											<strong>
-												{ sprintf(
-													/* translators: %s: command label */
-													__(
-														"Yes, let's %s 🚀",
-														'hey-wapuu'
-													),
-													cmd.label
-														.toLowerCase()
-														.replace( '!', '' )
-														.replace(
-															/✍️|🏠|📝|🖼️|📤|👗|🛠️|🗺️|👥|➕|💬|🦸‍♂️|🏷️|🖐️|🌍|😂|💛/g,
-															''
-														)
-														.trim()
-												) }
-											</strong>
-											<span>{ cmd.explanation }</span>
-										</button>
-									) : null;
-								} ) }
-							</div>
-						) }
 					</div>
+
+					{ matches.length > 0 && (
+						<div className="hw-suggestions">
+							{ matches.map( ( match ) => {
+								const cmd =
+									commandRegistry.find(
+										( c ) => c.id === match.id
+									) ||
+									dynamicCommands.find(
+										( c ) => c.id === match.id
+									);
+								return cmd ? (
+									<button
+										key={ match.id }
+										className="hw-match-card"
+										onClick={ () => {
+											runCommand( match.id );
+											setInput( '' );
+										} }
+									>
+										<strong>
+											{ sprintf(
+												/* translators: %s: command label */
+												__(
+													"Yes, let's %s 🚀",
+													'hey-wapuu'
+												),
+												cmd.label
+													.toLowerCase()
+													.replace( '!', '' )
+													.replace(
+														/✍️|🏠|📝|🖼️|📤|👗|🛠️|🗺️|👥|➕|💬|🦸‍♂️|🏷️|🖐️|🌍|😂|💛/g,
+														''
+													)
+													.trim()
+											) }
+										</strong>
+										<span>{ cmd.explanation }</span>
+									</button>
+								) : null;
+							} ) }
+						</div>
+					) }
 
 					<div
 						className={ `hw-input-area ${
