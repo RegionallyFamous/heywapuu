@@ -1,6 +1,6 @@
 {
   "name": "hey-wapuu",
-  "version": "1.0.3",
+  "version": "1.6.0",
   "description": "Natural language search for the WordPress Command Palette.",
   "main": "build/index.js",
   "type": "module",
@@ -17,19 +17,19 @@
   "author": "Regionally Famous",
   "license": "GPL-2.0-or-later",
   "dependencies": {
-    "@wordpress/commands": "latest",
-    "@wordpress/components": "latest",
-    "@wordpress/data": "latest",
-    "@wordpress/element": "latest",
-    "@wordpress/i18n": "latest",
-    "@wordpress/plugins": "latest"
+    "@wordpress/commands": "^1.37.0",
+    "@wordpress/components": "^31.0.0",
+    "@wordpress/data": "^10.37.0",
+    "@wordpress/element": "^6.37.0",
+    "@wordpress/i18n": "^6.10.0",
+    "@wordpress/plugins": "^7.37.0"
   },
   "devDependencies": {
-    "@huggingface/transformers": "latest",
-    "@wordpress/scripts": "latest",
-    "ajv": "latest",
-    "chokidar-cli": "latest",
-    "concurrently": "latest",
-    "fuse.js": "latest"
+    "@huggingface/transformers": "^3.8.1",
+    "@wordpress/scripts": "^31.2.0",
+    "ajv": "^8.17.1",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
+    "fuse.js": "^7.1.0"
   }
 }

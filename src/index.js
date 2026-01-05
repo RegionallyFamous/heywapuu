@@ -1,12 +1,13 @@
 /* global sessionStorage, Audio, Worker, ajaxurl, heyWapuuConfig */
 /* eslint-disable no-alert */
 import {
-	render,
+	createRoot,
 	useState,
 	useEffect,
 	useRef,
 	useCallback,
 	useMemo,
+	Fragment,
 } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
@@ -23,7 +24,7 @@ const sanitize = ( str ) => {
 	if ( ! str || typeof str !== 'string' ) {
 		return '';
 	}
-	return str.replace(
+	let safe = str.replace(
 		/[&<>"']/g,
 		( m ) =>
 			( {
@@ -33,6 +34,142 @@ const sanitize = ( str ) => {
 				'"': '&quot;',
 				"'": '&#39;',
 			} )[ m ]
+	);
+
+	// Allow ONLY strong tags for bolding from AI
+	safe = safe.replace(
+		/&lt;strong&gt;(.*?)&lt;\/strong&gt;/g,
+		'<strong>$1</strong>'
+	);
+
+	return safe;
+};
+
+/**
+ * Validates a local URL to ensure it's safe
+ *
+ * @param {string} url The URL to validate.
+ * @return {boolean} Whether the URL is safe.
+ */
+const isSafeUrl = ( url ) => {
+	if ( ! url ) {
+		return false;
+	}
+	// Only allow relative paths or paths starting with admin.php / wp-admin
+	return (
+		url.startsWith( '/' ) ||
+		url.startsWith( 'admin.php' ) ||
+		url.includes( 'wp-admin' )
+	);
+};
+
+/**
+ * Typewriter Effect Component (Enterprise smooth)
+ *
+ * @param {Object}   root0              Props object.
+ * @param {string}   root0.text         The text to type.
+ * @param {number}   [root0.speed=25]   Typing speed in ms.
+ * @param {Function} [root0.onComplete] Callback when typing finishes.
+ */
+const TypewriterText = ( { text, speed = 25, onComplete } ) => {
+	const [ displayedText, setDisplayedText ] = useState( '' );
+	const indexRef = useRef( 0 );
+	const lastTimeRef = useRef( 0 );
+
+	useEffect( () => {
+		let rafId;
+
+		const step = ( time ) => {
+			if ( ! lastTimeRef.current ) {
+				lastTimeRef.current = time;
+			}
+
+			const delta = time - lastTimeRef.current;
+
+			if ( delta >= speed ) {
+				if ( indexRef.current < text.length ) {
+					setDisplayedText( text.slice( 0, indexRef.current + 1 ) );
+					indexRef.current++;
+					lastTimeRef.current = time;
+				} else {
+					if ( onComplete ) {
+						onComplete();
+					}
+					return;
+				}
+			}
+
+			rafId = window.requestAnimationFrame( step );
+		};
+
+		rafId = window.requestAnimationFrame( step );
+		return () => window.cancelAnimationFrame( rafId );
+	}, [ text, speed, onComplete ] );
+
+	const renderedHtml = sanitize( displayedText ).replace(
+		/\*\*(.*?)\*\*/g,
+		'<strong>$1</strong>'
+	);
+
+	return (
+		<>
+			<span dangerouslySetInnerHTML={ { __html: renderedHtml } } />
+			{ indexRef.current < text.length && (
+				<span className="hw-typewriter-cursor" />
+			) }
+		</>
+	);
+};
+
+/**
+ * Action Card Component
+ *
+ * @param {Object}   root0          Props object.
+ * @param {string}   root0.type     Type of card.
+ * @param {Object}   root0.data     Data for the card.
+ * @param {Function} root0.onAction Action callback.
+ */
+const ActionCard = ( { type, data, onAction } ) => {
+	const icons = {
+		drafts: '✍️',
+		updates: '🔄',
+		media: '🖼️',
+		post: '📝',
+	};
+
+	const titles = {
+		drafts: __( 'Continue Writing?', 'hey-wapuu' ),
+		updates: __( 'Fresh Magic Available!', 'hey-wapuu' ),
+		media: __( 'Treasure Chest Update', 'hey-wapuu' ),
+		post: __( "What's Next?", 'hey-wapuu' ),
+	};
+
+	return (
+		<div className="hw-action-card">
+			<div className="hw-card-header">
+				<span>{ icons[ type ] || '✨' }</span>
+				<span>
+					{ titles[ type ] || __( 'Wapuu Suggestion', 'hey-wapuu' ) }
+				</span>
+			</div>
+			<div className="hw-card-body">{ data.message }</div>
+			<div className="hw-card-footer">
+				{ data.secondaryAction && (
+					<button
+						className="hw-card-btn is-secondary"
+						onClick={ () => onAction( data.secondaryAction.id ) }
+					>
+						{ data.secondaryAction.label }
+					</button>
+				) }
+				<button
+					className="hw-card-btn"
+					onClick={ () => onAction( data.primaryAction.id ) }
+				>
+					{ data.primaryAction.label }
+				</button>
+			</div>
+		</div>
 	);
 };
 
@@ -96,7 +233,7 @@ const WapuuChatApp = () => {
 			return {
 				name: __( 'this adventure', 'hey-wapuu' ),
 				nudge: __(
-					'I see we\'re working on a story! Need help with the words? ✍️✨',
+					"I see we're working on a story! Need help with the words? ✍️✨",
 					'hey-wapuu'
 				),
 			};
@@ -136,7 +273,7 @@ const WapuuChatApp = () => {
 			return {
 				name: __( 'the team house', 'hey-wapuu' ),
 				nudge: __(
-					'Managing our team of friends? I\'m here to help! 👥✨',
+					"Managing our team of friends? I'm here to help! 👥✨",
 					'hey-wapuu'
 				),
 			};
@@ -145,7 +282,7 @@ const WapuuChatApp = () => {
 		return {
 			name: __( 'this magic page', 'hey-wapuu' ),
 			nudge: __(
-				'I\'m all ready! What should we build together today? 🚀✨',
+				"I'm all ready! What should we build together today? 🚀✨",
 				'hey-wapuu'
 			),
 		};
@@ -156,17 +293,22 @@ const WapuuChatApp = () => {
 	const [ messages, setMessages ] = useState( () => {
 		try {
 			const saved = sessionStorage.getItem( 'hey_wapuu_history' );
-			return saved ? JSON.parse( saved ) : [];
+			const parsed = saved ? JSON.parse( saved ) : [];
+			// Mark old messages as already typed
+			return parsed.map( ( m ) => ( { ...m, hasTyped: true } ) );
 		} catch ( e ) {
 			return [];
 		}
 	} );
 	const [ matches, setMatches ] = useState( [] );
+	const [ dynamicCommands, setDynamicCommands ] = useState( [] );
 	const [ workerStatus, setWorkerStatus ] = useState( 'idle' );
 	const [ loadingProgress, setLoadingProgress ] = useState( 0 );
+	const [ isReadyNotification, setIsReadyNotification ] = useState( false );
 	const [ isThinking, setIsThinking ] = useState( false );
 	const [ isListening, setIsListening ] = useState( false );
 	const [ wapuuMood, setWapuuMood ] = useState( 'happy' ); // happy, thinking, wiggle, celebrate
+	const [ isGlowing, setIsGlowing ] = useState( false );
 
 	const workerRef = useRef( null );
 	const scrollRef = useRef( null );
@@ -175,6 +317,145 @@ const WapuuChatApp = () => {
 	const chatWindowRef = useRef( null );
 	const recognitionRef = useRef( null );
 	const getScreenContextRef = useRef( getScreenContext );
+	const debounceTimerRef = useRef( null );
+
+	/**
+	 * Sidebar Scraper: Learn custom menu items
+	 */
+	useEffect( () => {
+		const scrapeSidebar = () => {
+			const menuItems = document.querySelectorAll(
+				'#adminmenu a.wp-has-submenu, #adminmenu a.menu-top'
+			);
+			const learned = [];
+
+			menuItems.forEach( ( item ) => {
+				const label = item.innerText
+					.replace( /\d+/g, '' )
+					.replace( /<[^>]*>?/gm, '' )
+					.trim();
+				const url = item.getAttribute( 'href' );
+
+				if (
+					label &&
+					url &&
+					! learned.some( ( l ) => l.label === label )
+				) {
+					if ( isSafeUrl( url ) ) {
+						learned.push( {
+							id: `dynamic/${ url }`,
+							label,
+							url,
+							explanation: sprintf(
+								/* translators: %s: menu label */
+								__( 'Open the %s page', 'hey-wapuu' ),
+								label
+							),
+							isDynamic: true,
+						} );
+					}
+				}
+			} );
+
+			// Check for changes before updating state to avoid re-renders
+			setDynamicCommands( ( prev ) => {
+				if ( JSON.stringify( prev ) === JSON.stringify( learned ) ) {
+					return prev;
+				}
+				return learned;
+			} );
+		};
+
+		if ( document.readyState === 'complete' ) {
+			scrapeSidebar();
+		} else {
+			window.addEventListener( 'load', scrapeSidebar );
+			return () => window.removeEventListener( 'load', scrapeSidebar );
+		}
+	}, [] );
+
+	/**
+	 * Send dynamic commands to worker
+	 */
+	useEffect( () => {
+		if (
+			workerStatus === 'ready' &&
+			dynamicCommands.length > 0 &&
+			workerRef.current
+		) {
+			workerRef.current.postMessage( {
+				type: 'learn',
+				data: { commands: dynamicCommands },
+			} );
+		}
+	}, [ workerStatus, dynamicCommands ] );
+
+	/**
+	 * Live Search Logic
+	 */
+	useEffect( () => {
+		if ( ! input.trim() || workerStatus !== 'ready' ) {
+			if ( ! isThinking ) {
+				setMatches( [] );
+			}
+			return;
+		}
+
+		// Debounce to save CPU/Battery
+		if ( debounceTimerRef.current ) {
+			clearTimeout( debounceTimerRef.current );
+		}
+
+		debounceTimerRef.current = setTimeout( () => {
+			if ( workerRef.current ) {
+				workerRef.current.postMessage( {
+					type: 'query',
+					data: {
+						text: input,
+						context: context.postType || context.screenId,
+						dynamicCommands, // Pass the "learned" commands to the AI
+					},
+				} );
+			}
+		}, 250 );
+
+		return () => clearTimeout( debounceTimerRef.current );
+	}, [ input, workerStatus, dynamicCommands, context, isThinking ] );
+
+	/**
+	 * Launch Confetti Celebration
+	 */
+	const launchConfetti = useCallback( () => {
+		const colors = [
+			'#ffce00',
+			'#007cba',
+			'#ff4444',
+			'#44ff44',
+			'#ffffff',
+		];
+		const count = 40;
+		const container = document.body;
+
+		for ( let i = 0; i < count; i++ ) {
+			const c = document.createElement( 'div' );
+			c.className = 'hw-confetti';
+			c.style.background =
+				colors[ Math.floor( Math.random() * colors.length ) ];
+			c.style.left = `${ Math.random() * 100 }vw`;
+			c.style.top = '-10px';
+			c.style.setProperty(
+				'--tw-x',
+				`${ ( Math.random() - 0.5 ) * 200 }px`
+			);
+			c.style.setProperty( '--tw-r', `${ Math.random() * 1000 }deg` );
+			c.style.width = `${ 5 + Math.random() * 10 }px`;
+			c.style.height = c.style.width;
+			c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+
+			container.appendChild( c );
+			setTimeout( () => c.remove(), 3000 );
+		}
+	}, [] );
 
 	// Update ref whenever getScreenContext changes
 	useEffect( () => {
@@ -431,6 +712,42 @@ const WapuuChatApp = () => {
 			setIsThinking( true );
 			setWapuuMood( 'thinking' );
 
+			// REGEX FAST-PATH: Check for obvious matches before hitting the AI
+			const fastMatch = searchFallback( messageText );
+			const isExactMatch = fastMatch.some( ( m ) => {
+				const cmd = commandRegistry.find( ( c ) => c.id === m.id );
+				return (
+					cmd &&
+					cmd.label
+						.toLowerCase()
+						.includes( messageText.toLowerCase() )
+				);
+			} );
+
+			if ( isExactMatch && fastMatch.length === 1 ) {
+				setTimeout( () => {
+					setIsThinking( false );
+					setWapuuMood( 'happy' );
+					setMatches( fastMatch );
+					setMessages( ( prev ) => [
+						...prev,
+						{
+							role: 'ai',
+							text: sprintf(
+								/* translators: %s: user first name */
+								__(
+									"I've got that right here for you, %s! ✨",
+									'hey-wapuu'
+								),
+								user.firstName
+							),
+							hasTyped: false,
+						},
+					] );
+				}, 50 ); // Near-instant response
+				return;
+			}
+
 			if ( workerStatus === 'ready' && workerRef.current ) {
 				workerRef.current.postMessage( {
 					type: 'query',
@@ -456,6 +773,7 @@ const WapuuChatApp = () => {
 									"I'm still opening my big book of magic, but I think you might mean one of these! 📖✨",
 									'hey-wapuu'
 								),
+								hasTyped: false,
 							},
 						] );
 					} else {
@@ -467,13 +785,14 @@ const WapuuChatApp = () => {
 									"Wait for it… I'm still reading my notes! Once I'm done, I can help you with almost anything! 📚💛",
 									'hey-wapuu'
 								),
+								hasTyped: false,
 							},
 						] );
 					}
 				}, 600 );
 			}
 		},
-		[ input, workerStatus, context, triggerHaptic ]
+		[ input, workerStatus, context, triggerHaptic, user.firstName ]
 	);
 
 	/**
@@ -481,7 +800,11 @@ const WapuuChatApp = () => {
 	 */
 	const runCommand = useCallback(
 		( commandId ) => {
-			const cmd = commandRegistry.find( ( c ) => c.id === commandId );
+			// Find in registry OR dynamic commands
+			const cmd =
+				commandRegistry.find( ( c ) => c.id === commandId ) ||
+				dynamicCommands.find( ( c ) => c.id === commandId );
+
 			if ( ! cmd ) {
 				return;
 			}
@@ -502,6 +825,7 @@ const WapuuChatApp = () => {
 				},
 			] );
 			setWapuuMood( 'celebrate' );
+			launchConfetti();
 
 			sessionStorage.setItem(
 				'hey_wapuu_arrival',
@@ -530,7 +854,13 @@ const WapuuChatApp = () => {
 				}
 			}, 800 );
 		},
-		[ allRegisteredCommands, executeCommand, handleSpecialAction ]
+		[
+			allRegisteredCommands,
+			executeCommand,
+			handleSpecialAction,
+			dynamicCommands,
+			launchConfetti,
+		]
 	);
 
 	/**
@@ -639,8 +969,41 @@ const WapuuChatApp = () => {
 					setTimeout( () => {
 						setMessages( ( prev ) => [
 							...prev,
-							{ role: 'ai', text: arrivalMessage },
+							{
+								role: 'ai',
+								text: arrivalMessage,
+								hasTyped: false,
+							},
 						] );
+
+						// Intent Chaining: Proactive follow-ups
+						if ( id === 'core/add-new-post' ) {
+							setTimeout( () => {
+								setMessages( ( prev ) => [
+									...prev,
+									{
+										role: 'ai',
+										type: 'card',
+										cardType: 'post',
+										hasTyped: true,
+										data: {
+											message: __(
+												'Want some tips on writing great headlines?',
+												'hey-wapuu'
+											),
+											primaryAction: {
+												id: 'wapuu/show-tips',
+												label: __(
+													'Show Tips 💡',
+													'hey-wapuu'
+												),
+											},
+										},
+									},
+								] );
+							}, 3000 );
+						}
+
 						setIsOpen( true );
 						setWapuuMood( 'celebrate' );
 						setTimeout( () => setWapuuMood( 'happy' ), 2000 );
@@ -750,7 +1113,12 @@ const WapuuChatApp = () => {
 			setTimeout(
 				() =>
 					setMessages( [
-						{ role: 'ai', text: welcomeText, isInitial: true },
+						{
+							role: 'ai',
+							text: welcomeText,
+							isInitial: true,
+							hasTyped: false,
+						},
 					] ),
 				300
 			);
@@ -768,10 +1136,12 @@ const WapuuChatApp = () => {
 
 	// History and Audio sync
 	useEffect( () => {
-		sessionStorage.setItem(
-			'hey_wapuu_history',
-			JSON.stringify( messages )
-		);
+		if ( messages.length > 0 ) {
+			sessionStorage.setItem(
+				'hey_wapuu_history',
+				JSON.stringify( messages.slice( -50 ) ) // Keep history lean for performance
+			);
+		}
 		if (
 			messages.length > 0 &&
 			messages[ messages.length - 1 ].role === 'ai'
@@ -785,7 +1155,10 @@ const WapuuChatApp = () => {
 		const handleKeyDown = ( e ) => {
 			// Toggle with Alt+W (standard) or Ctrl+W (non-Mac)
 			// Using e.code 'KeyW' is more robust for physical key mapping
-			if ( ( e.altKey || ( e.ctrlKey && ! e.metaKey ) ) && e.code === 'KeyW' ) {
+			if (
+				( e.altKey || ( e.ctrlKey && ! e.metaKey ) ) &&
+				e.code === 'KeyW'
+			) {
 				setIsOpen( ( prev ) => ! prev );
 				e.preventDefault();
 				e.stopPropagation();
@@ -804,9 +1177,10 @@ const WapuuChatApp = () => {
 
 				// Tab Trap
 				if ( e.key === 'Tab' && chatWindowRef.current ) {
-					const focusableElements = chatWindowRef.current.querySelectorAll(
-						'button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
-					);
+					const focusableElements =
+						chatWindowRef.current.querySelectorAll(
+							'button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
+						);
 					const focusable = Array.from( focusableElements );
 
 					if ( focusable.length === 0 ) {
@@ -815,7 +1189,8 @@ const WapuuChatApp = () => {
 
 					const first = focusable[ 0 ];
 					const last = focusable[ focusable.length - 1 ];
-					const activeElement = document.activeElement;
+					const activeElement =
+						chatWindowRef.current.ownerDocument.activeElement;
 
 					if ( e.shiftKey && activeElement === first ) {
 						last.focus();
@@ -848,7 +1223,16 @@ const WapuuChatApp = () => {
 
 	// Web Worker Lifecycle
 	useEffect( () => {
-		if ( workerStatus === 'idle' && window.Worker ) {
+		const channel =
+			typeof window.BroadcastChannel !== 'undefined'
+				? new BroadcastChannel( 'hey_wapuu_sync' )
+				: null;
+
+		const initWorker = () => {
+			if ( workerStatus !== 'idle' || ! window.Worker ) {
+				return;
+			}
+
 			setWorkerStatus( 'initializing' );
 			workerRef.current = new Worker( heyWapuuConfig.workerUrl );
 			workerRef.current.postMessage( {
@@ -868,6 +1252,15 @@ const WapuuChatApp = () => {
 					if ( data.status === 'ready' ) {
 						setWorkerStatus( 'ready' );
 						setLoadingProgress( 100 );
+						setIsReadyNotification( true );
+						setTimeout(
+							() => setIsReadyNotification( false ),
+							3000
+						);
+
+						// SYNC: Notify other tabs
+						channel?.postMessage( { type: 'ready' } );
+
 						const screenContext = getScreenContextRef.current();
 						translatedMessage = sprintf(
 							/* translators: %s: screen name */
@@ -889,6 +1282,11 @@ const WapuuChatApp = () => {
 							const val = parseInt( data.percent, 10 );
 							if ( ! isNaN( val ) ) {
 								setLoadingProgress( val );
+								// SYNC: Share progress
+								channel?.postMessage( {
+									type: 'progress',
+									percent: val,
+								} );
 							}
 						}
 						translatedMessage = sprintf(
@@ -917,6 +1315,7 @@ const WapuuChatApp = () => {
 								role: 'ai',
 								text: translatedMessage,
 								isStatus: true,
+								hasTyped: true, // Status messages don't need typewriter
 							};
 							return newMsgs;
 						}
@@ -926,6 +1325,7 @@ const WapuuChatApp = () => {
 								role: 'ai',
 								text: translatedMessage,
 								isStatus: true,
+								hasTyped: true,
 							},
 						];
 					} );
@@ -939,6 +1339,7 @@ const WapuuChatApp = () => {
 								"I got a bit confused by that one! Maybe try saying it a different way? I'm still learning! 🤔",
 								'hey-wapuu'
 							),
+							hasTyped: false,
 						},
 					] );
 				} else if ( type === 'results' ) {
@@ -967,11 +1368,11 @@ const WapuuChatApp = () => {
 								topMatch.explanation
 							);
 						} else if ( rand === 1 ) {
-								reply = sprintf(
-									/* translators: %s: user first name */
-									__( 'You got it, %s 🚀', 'hey-wapuu' ),
-									user.firstName
-								);
+							reply = sprintf(
+								/* translators: %s: user first name */
+								__( 'You got it, %s 🚀', 'hey-wapuu' ),
+								user.firstName
+							);
 						} else if ( rand === 2 ) {
 							reply = sprintf(
 								/* translators: 1: user first name, 2: command explanation */
@@ -1031,14 +1432,138 @@ const WapuuChatApp = () => {
 
 					setMessages( ( prev ) => [
 						...prev,
-						{ role: 'ai', text: reply },
+						{ role: 'ai', text: reply, hasTyped: false },
 					] );
-					setTimeout( () => setWapuuMood( 'happy' ), 1500 );
+					setTimeout( () => {
+						setWapuuMood( 'happy' );
+						setIsGlowing( false );
+					}, 1500 );
+				}
+			};
+
+			// Handle worker unexpected termination
+			workerRef.current.onerror = () => {
+				setWorkerStatus( 'idle' ); // Allow re-init
+				// eslint-disable-next-line no-console
+				console.error( 'Wapuu Worker crashed. Attempting recovery...' );
+			};
+		};
+
+		// Listen for sync messages from other tabs
+		if ( channel ) {
+			channel.onmessage = ( event ) => {
+				if ( event.data.type === 'ready' && workerStatus !== 'ready' ) {
+					setWorkerStatus( 'ready' );
+					setLoadingProgress( 100 );
+					setIsReadyNotification( true );
+					setTimeout( () => setIsReadyNotification( false ), 3000 );
+				} else if (
+					event.data.type === 'progress' &&
+					workerStatus !== 'ready'
+				) {
+					setLoadingProgress( event.data.percent );
 				}
 			};
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [] ); 
+
+		// IDLE BOOT: Wait for the browser to be idle before starting the AI worker
+		if ( window.requestIdleCallback ) {
+			window.requestIdleCallback( () => initWorker(), { timeout: 2000 } );
+		} else {
+			setTimeout( initWorker, 1000 );
+		}
+
+		return () => {
+			if ( workerRef.current ) {
+				workerRef.current.terminate();
+			}
+			channel?.close();
+		};
+	}, [ workerStatus, getScreenContext ] );
+
+	// Proactive suggestions based on context
+	useEffect( () => {
+		if (
+			workerStatus === 'ready' &&
+			messages.length === 1 &&
+			messages[ 0 ].isInitial
+		) {
+			// Add a proactive card based on site state
+			setTimeout( () => {
+				if ( site.draftCount > 0 ) {
+					setMessages( ( prev ) => [
+						...prev,
+						{
+							role: 'ai',
+							type: 'card',
+							cardType: 'drafts',
+							hasTyped: true, // Cards don't typewriter
+							data: {
+								message: sprintf(
+									/* translators: %d: draft count */
+									__(
+										'I see we have %d stories in progress. Want to pick one up where we left off?',
+										'hey-wapuu'
+									),
+									site.draftCount
+								),
+								primaryAction: {
+									id: 'core/open-post-library',
+									label: __( 'View Drafts', 'hey-wapuu' ),
+								},
+							},
+						},
+					] );
+				} else if ( site.hasUpdates ) {
+					setMessages( ( prev ) => [
+						...prev,
+						{
+							role: 'ai',
+							type: 'card',
+							cardType: 'updates',
+							hasTyped: true,
+							data: {
+								message: __(
+									"There's new magic available for our site! Should we check out the updates?",
+									'hey-wapuu'
+								),
+								primaryAction: {
+									id: 'core/open-updates',
+									label: __( 'Update Now', 'hey-wapuu' ),
+								},
+							},
+						},
+					] );
+				} else if ( site.postCount === 0 ) {
+					setMessages( ( prev ) => [
+						...prev,
+						{
+							role: 'ai',
+							type: 'card',
+							cardType: 'post',
+							hasTyped: true,
+							data: {
+								message: __(
+									'Our story library is empty! 📖 Want to start our very first magic adventure?',
+									'hey-wapuu'
+								),
+								primaryAction: {
+									id: 'core/add-new-post',
+									label: __( 'Start Story', 'hey-wapuu' ),
+								},
+							},
+						},
+					] );
+				}
+			}, 2000 );
+		}
+	}, [
+		workerStatus,
+		messages,
+		site.draftCount,
+		site.hasUpdates,
+		site.postCount,
+	] );
 
 	// Auto-scroll
 	useEffect( () => {
@@ -1047,13 +1572,36 @@ const WapuuChatApp = () => {
 		}
 	}, [ messages, isThinking ] );
 
+	// Glow effect based on mood
+	useEffect( () => {
+		if ( wapuuMood === 'thinking' || wapuuMood === 'celebrate' ) {
+			setIsGlowing( true );
+		} else {
+			setIsGlowing( false );
+		}
+	}, [ wapuuMood ] );
+
+	const summonerClassName = [
+		'hw-summoner',
+		isOpen ? 'is-active' : '',
+		isReadyNotification ? 'is-ready-notification' : '',
+		`mood-${ wapuuMood }`,
+	]
+		.filter( Boolean )
+		.join( ' ' );
+
+	let inputPlaceholder = __( 'Talk to me…', 'hey-wapuu' );
+	if ( workerStatus !== 'ready' ) {
+		inputPlaceholder = __( 'Wapuu is reading…', 'hey-wapuu' );
+	} else if ( isListening ) {
+		inputPlaceholder = __( "I'm listening…", 'hey-wapuu' );
+	}
+
 	return (
 		<>
 			<button
 				ref={ summonerRef }
-				className={ `hw-summoner ${
-					isOpen ? 'is-active' : ''
-				} mood-${ wapuuMood }` }
+				className={ summonerClassName }
 				onClick={ () => setIsOpen( ! isOpen ) }
 				aria-expanded={ isOpen }
 				aria-haspopup="dialog"
@@ -1068,7 +1616,9 @@ const WapuuChatApp = () => {
 
 			{ isOpen && (
 				<div
-					className="hw-chat-window"
+					className={ `hw-chat-window ${
+						isGlowing ? 'is-glowing' : ''
+					}` }
 					role="dialog"
 					aria-modal="true"
 					aria-label={ __( 'Wapuu Assistant', 'hey-wapuu' ) }
@@ -1134,19 +1684,45 @@ const WapuuChatApp = () => {
 						aria-live="polite"
 					>
 						{ messages.map( ( msg, i ) => (
-							<div
-								key={ i }
-								className={ `hw-bubble hw-bubble-${ msg.role }` }
-							>
-								<span
-									dangerouslySetInnerHTML={ {
-										__html: sanitize( msg.text ).replace(
-											/\*\*(.*?)\*\*/g,
-											'<strong>$1</strong>'
-										),
-									} }
-								/>
-							</div>
+							<Fragment key={ i }>
+								<div
+									className={ `hw-bubble hw-bubble-${ msg.role }` }
+								>
+									{ msg.role === 'ai' && ! msg.hasTyped ? (
+										<TypewriterText
+											text={ msg.text }
+											onComplete={ () => {
+												setMessages( ( prev ) => {
+													const newMsgs = [ ...prev ];
+													newMsgs[ i ] = {
+														...newMsgs[ i ],
+														hasTyped: true,
+													};
+													return newMsgs;
+												} );
+											} }
+										/>
+									) : (
+										<span
+											dangerouslySetInnerHTML={ {
+												__html: sanitize(
+													msg.text
+												).replace(
+													/\*\*(.*?)\*\*/g,
+													'<strong>$1</strong>'
+												),
+											} }
+										/>
+									) }
+								</div>
+								{ msg.type === 'card' && (
+									<ActionCard
+										type={ msg.cardType }
+										data={ msg.data }
+										onAction={ runCommand }
+									/>
+								) }
+							</Fragment>
 						) ) }
 						{ isThinking && (
 							<div
@@ -1164,16 +1740,21 @@ const WapuuChatApp = () => {
 						{ matches.length > 0 && (
 							<div className="hw-suggestions">
 								{ matches.map( ( match ) => {
-									const cmd = commandRegistry.find(
-										( c ) => c.id === match.id
-									);
+									const cmd =
+										commandRegistry.find(
+											( c ) => c.id === match.id
+										) ||
+										dynamicCommands.find(
+											( c ) => c.id === match.id
+										);
 									return cmd ? (
 										<button
 											key={ match.id }
 											className="hw-match-card"
-											onClick={ () =>
-												runCommand( match.id )
-											}
+											onClick={ () => {
+												runCommand( match.id );
+												setInput( '' );
+											} }
 										>
 											<strong>
 												{ sprintf(
@@ -1224,13 +1805,7 @@ const WapuuChatApp = () => {
 							ref={ inputRef }
 							type="text"
 							disabled={ workerStatus !== 'ready' }
-							placeholder={
-								workerStatus !== 'ready'
-									? __( 'Wapuu is reading…', 'hey-wapuu' )
-									: isListening
-									? __( "I'm listening…", 'hey-wapuu' )
-									: __( 'Talk to me…', 'hey-wapuu' )
-							}
+							placeholder={ inputPlaceholder }
 							value={ input }
 							onChange={ ( e ) => setInput( e.target.value ) }
 							onKeyDown={ ( e ) =>
@@ -1257,10 +1832,11 @@ const init = () => {
 		if ( document.getElementById( 'hey-wapuu-root' ) ) {
 			return;
 		}
-		const root = document.createElement( 'div' );
-		root.id = 'hey-wapuu-root';
-		document.body.appendChild( root );
-		render( <WapuuChatApp />, root );
+		const rootElement = document.createElement( 'div' );
+		rootElement.id = 'hey-wapuu-root';
+		document.body.appendChild( rootElement );
+		const root = createRoot( rootElement );
+		root.render( <WapuuChatApp /> );
 	}
 };
 
