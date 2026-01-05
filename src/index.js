@@ -296,6 +296,7 @@ const WapuuChatApp = () => {
 				{
 					role: 'ai',
 					text: __( 'Navigating to your destination.', 'hey-wapuu' ),
+					isTransient: true,
 				},
 			] );
 			setWapuuMood( 'celebrate' );
@@ -445,6 +446,36 @@ const WapuuChatApp = () => {
 	useEffect( () => {
 		setIsGlowing( wapuuMood === 'thinking' || wapuuMood === 'celebrate' );
 	}, [ wapuuMood ] );
+
+	useEffect( () => {
+		const arrivalData = sessionStorage.getItem( 'hey_wapuu_arrival' );
+		if ( arrivalData ) {
+			try {
+				const { label } = JSON.parse( arrivalData );
+				setTimeout( () => {
+					setMessages( ( prev ) => [
+						...prev.filter( ( m ) => ! m.isTransient ),
+						{
+							role: 'ai',
+							text: sprintf(
+								/* translators: %s: destination label */
+								__(
+									'You have arrived at: **%s**.',
+									'hey-wapuu'
+								),
+								label
+							),
+							hasTyped: false,
+						},
+					] );
+					setIsOpen( true );
+					setWapuuMood( 'celebrate' );
+					setTimeout( () => setWapuuMood( 'happy' ), 2000 );
+				}, 500 );
+			} catch ( e ) {}
+			sessionStorage.removeItem( 'hey_wapuu_arrival' );
+		}
+	}, [] );
 
 	// --- RENDER ---
 	const summonerClassName = [
