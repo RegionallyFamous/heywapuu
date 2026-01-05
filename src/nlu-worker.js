@@ -7,7 +7,8 @@ import { findBestMatches } from './matcher.js';
 env.allowLocalModels = true;
 env.localModelPath = ''; // Dynamic
 env.allowRemoteModels = false; // Security: force local only
-env.useBrowserCache = true;
+env.useBrowserCache = false; // Disable for now to ensure we get the fresh quantized model
+env.useCustomCache = false;
 
 let extractor = null;
 let commandEmbeddings = null;
@@ -23,7 +24,7 @@ self.onmessage = async ( event ) => {
 	try {
 		switch ( type ) {
 			case 'init':
-				await initWorker( data.embeddingsUrl, data.modelUrl );
+				await initWorker( data.embeddingsUrl, data.modelUrl, data.version );
 				break;
 			case 'query':
 				await handleInference( data.text, data.context );
@@ -40,8 +41,9 @@ self.onmessage = async ( event ) => {
  *
  * @param {string} embeddingsUrl
  * @param {string} modelUrl
+ * @param {string} version
  */
-async function initWorker( embeddingsUrl, modelUrl ) {
+async function initWorker( embeddingsUrl, modelUrl, version ) {
 	try {
 		self.postMessage( {
 			type: 'status',
@@ -63,7 +65,10 @@ async function initWorker( embeddingsUrl, modelUrl ) {
 
 		// Load the transformer pipeline
 		extractor = await pipeline( 'feature-extraction', 'all-MiniLM-L6-v2', {
-			dtype: 'fp32',
+			quantized: true,
+			fetch_options: {
+				cache: 'no-cache', // Bypass browser cache for the .onnx file
+			},
 			progress_callback: ( progress ) => {
 				if ( progress.status === 'downloading' ) {
 					const percent = progress.total

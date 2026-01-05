@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hey Wapuu
  * Description: Natural language search for the WordPress Command Palette.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Regionally Famous
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,12 +53,13 @@ function hey_wapuu_enqueue_assets() {
 	}
 
 	$asset_file = include $asset_file_path;
+	$version = ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? time() : $asset_file['version'];
 
 	wp_enqueue_script(
 		'hey-wapuu-script',
 		plugin_dir_url( __FILE__ ) . 'build/index.js',
 		$asset_file['dependencies'],
-		$asset_file['version'],
+		$version,
 		true
 	);
 
@@ -76,11 +77,11 @@ function hey_wapuu_enqueue_assets() {
 			'hey-wapuu-style',
 			$css_file_url,
 			array(),
-			$asset_file['version']
+			$version
 		);
 	}
-
-	// Prepare data for localization
+	
+	// ... (rest of the data preparation)
 	$current_user = wp_get_current_user();
 	$post_counts  = wp_count_posts();
 	$theme        = wp_get_theme();
@@ -94,9 +95,10 @@ function hey_wapuu_enqueue_assets() {
 	
 	$config = array(
 		'pluginUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) ),
-		'workerUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/nlu-worker.js?ver=' . $asset_file['version'] ),
+		'workerUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/nlu-worker.js?ver=' . $version ),
 		'modelUrl'  => esc_url_raw( plugin_dir_url( __FILE__ ) . 'models/' ),
-		'embeddingsUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/embeddings.json?ver=' . $asset_file['version'] ),
+		'version'   => $version,
+		'embeddingsUrl' => esc_url_raw( plugin_dir_url( __FILE__ ) . 'build/embeddings.json?ver=' . $version ),
 		'nonce'     => wp_create_nonce( 'hey_wapuu_nonce' ),
 		'user' => array(
 			'firstName' => esc_html( $current_user->user_firstname ?: $current_user->display_name ),

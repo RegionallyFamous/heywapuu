@@ -122,16 +122,6 @@ const WapuuChatApp = () => {
 			};
 		}
 
-		if ( screenId === 'dashboard' ) {
-			return {
-				name: __( 'headquarters', 'hey-wapuu' ),
-				nudge: __(
-					"Welcome back! Everything looks great on our site's map! 🗺️✨",
-					'hey-wapuu'
-				),
-			};
-		}
-
 		if ( screenId === 'themes' ) {
 			return {
 				name: __( 'the wardrobe', 'hey-wapuu' ),
@@ -173,6 +163,7 @@ const WapuuChatApp = () => {
 	} );
 	const [ matches, setMatches ] = useState( [] );
 	const [ workerStatus, setWorkerStatus ] = useState( 'idle' );
+	const [ loadingProgress, setLoadingProgress ] = useState( 0 );
 	const [ isThinking, setIsThinking ] = useState( false );
 	const [ isListening, setIsListening ] = useState( false );
 	const [ wapuuMood, setWapuuMood ] = useState( 'happy' ); // happy, thinking, wiggle, celebrate
@@ -183,6 +174,12 @@ const WapuuChatApp = () => {
 	const summonerRef = useRef( null );
 	const chatWindowRef = useRef( null );
 	const recognitionRef = useRef( null );
+	const getScreenContextRef = useRef( getScreenContext );
+
+	// Update ref whenever getScreenContext changes
+	useEffect( () => {
+		getScreenContextRef.current = getScreenContext;
+	}, [ getScreenContext ] );
 
 	const { executeCommand } = useDispatch( 'core/commands' );
 	const allRegisteredCommands = useSelect(
@@ -823,7 +820,7 @@ const WapuuChatApp = () => {
 
 	// Web Worker Lifecycle
 	useEffect( () => {
-		if ( isOpen && workerStatus === 'idle' && window.Worker ) {
+		if ( workerStatus === 'idle' && window.Worker ) {
 			setWorkerStatus( 'initializing' );
 			workerRef.current = new Worker( heyWapuuConfig.workerUrl );
 			workerRef.current.postMessage( {
@@ -831,6 +828,7 @@ const WapuuChatApp = () => {
 				data: {
 					embeddingsUrl: heyWapuuConfig.embeddingsUrl,
 					modelUrl: heyWapuuConfig.modelUrl,
+					version: heyWapuuConfig.version,
 				},
 			} );
 
@@ -841,7 +839,8 @@ const WapuuChatApp = () => {
 
 					if ( data.status === 'ready' ) {
 						setWorkerStatus( 'ready' );
-						const screenContext = getScreenContext();
+						setLoadingProgress( 100 );
+						const screenContext = getScreenContextRef.current();
 						translatedMessage = sprintf(
 							/* translators: %s: screen name */
 							__(
@@ -851,11 +850,19 @@ const WapuuChatApp = () => {
 							screenContext.name
 						);
 					} else if ( data.status === 'loading' ) {
+						setWorkerStatus( 'loading' );
 						translatedMessage = __(
 							"I'm opening my big book of WordPress magic! 📖✨",
 							'hey-wapuu'
 						);
 					} else if ( data.status === 'downloading' ) {
+						setWorkerStatus( 'downloading' );
+						if ( data.percent ) {
+							const val = parseInt( data.percent, 10 );
+							if ( ! isNaN( val ) ) {
+								setLoadingProgress( val );
+							}
+						}
 						translatedMessage = sprintf(
 							/* translators: %s: percentage or size */
 							__(
@@ -865,6 +872,7 @@ const WapuuChatApp = () => {
 							data.percent || ''
 						);
 					} else if ( data.status === 'error' ) {
+						setWorkerStatus( 'error' );
 						translatedMessage = __(
 							'Oopsie! My brain had a little hiccup. Can we try again? 🙃',
 							'hey-wapuu'
@@ -1001,7 +1009,8 @@ const WapuuChatApp = () => {
 				}
 			};
 		}
-	}, [ isOpen, workerStatus, user.firstName ] );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [] ); 
 
 	// Auto-scroll
 	useEffect( () => {
@@ -1048,6 +1057,7 @@ const WapuuChatApp = () => {
 						<div className="hw-header-actions">
 							<button
 								onClick={ () => handleSpecialAction( 'help' ) }
+								disabled={ workerStatus !== 'ready' }
 								aria-label={ __( 'Help', 'hey-wapuu' ) }
 								className="hw-help-btn"
 								title={ __( 'What can I do?', 'hey-wapuu' ) }
@@ -1056,6 +1066,7 @@ const WapuuChatApp = () => {
 							</button>
 							<button
 								onClick={ clearChat }
+								disabled={ workerStatus !== 'ready' }
 								aria-label={ __( 'Clear Chat', 'hey-wapuu' ) }
 								className="hw-clear-btn"
 								title={ __( 'Clear Chat', 'hey-wapuu' ) }
@@ -1071,6 +1082,22 @@ const WapuuChatApp = () => {
 							</button>
 						</div>
 					</div>
+
+					{ workerStatus !== 'ready' && (
+						<div
+							className="hw-progress-container"
+							title={ sprintf(
+								/* translators: %d: progress percentage */
+								__( 'Loading: %d%%', 'hey-wapuu' ),
+								loadingProgress
+							) }
+						>
+							<div
+								className="hw-progress-bar"
+								style={ { width: `${ loadingProgress }%` } }
+							/>
+						</div>
+					) }
 
 					<div
 						className="hw-chat-content"
@@ -1145,12 +1172,17 @@ const WapuuChatApp = () => {
 						) }
 					</div>
 
-					<div className="hw-input-area">
+					<div
+						className={ `hw-input-area ${
+							workerStatus !== 'ready' ? 'is-disabled' : ''
+						}` }
+					>
 						<button
 							className={ `hw-mic-btn ${
 								isListening ? 'is-listening' : ''
 							}` }
 							onClick={ toggleListening }
+							disabled={ workerStatus !== 'ready' }
 							aria-label={
 								isListening
 									? __( 'Stop Listening', 'hey-wapuu' )
@@ -1163,8 +1195,11 @@ const WapuuChatApp = () => {
 						<input
 							ref={ inputRef }
 							type="text"
+							disabled={ workerStatus !== 'ready' }
 							placeholder={
-								isListening
+								workerStatus !== 'ready'
+									? __( 'Wapuu is reading…', 'hey-wapuu' )
+									: isListening
 									? __( "I'm listening…", 'hey-wapuu' )
 									: __( 'Talk to me…', 'hey-wapuu' )
 							}
@@ -1178,6 +1213,7 @@ const WapuuChatApp = () => {
 						<button
 							className="hw-send-btn"
 							onClick={ () => handleSend() }
+							disabled={ workerStatus !== 'ready' }
 						>
 							{ __( 'Go', 'hey-wapuu' ) }
 						</button>

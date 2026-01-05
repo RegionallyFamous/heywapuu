@@ -8,6 +8,10 @@ const FILES = [
 	'tokenizer.json',
 	'tokenizer_config.json',
 	'special_tokens_map.json',
+	'onnx/model_quantized.onnx',
+];
+
+const OLD_FILES = [
 	'onnx/model.onnx',
 ];
 
@@ -17,6 +21,15 @@ async function main() {
 	const targetDir = path.join(process.cwd(), 'models', 'all-MiniLM-L6-v2');
 	
 	console.log(`🚀 Hey Wapuu: Ensuring model files are in ${targetDir}...`);
+
+	// Cleanup old files
+	for (const file of OLD_FILES) {
+		const oldPath = path.join(targetDir, file);
+		if (fs.existsSync(oldPath)) {
+			console.log(`🧹 Cleaning up old model file: ${file}...`);
+			fs.unlinkSync(oldPath);
+		}
+	}
 
 	for (const file of FILES) {
 		const url = BASE_URL + file;
@@ -34,7 +47,7 @@ async function main() {
 
 		console.log(`📥 Downloading: ${file}...`);
 		try {
-			execSync(`curl -L -f -s -S "${url}" -o "${dest}"`, { stdio: 'inherit' });
+			execSync(`curl -L -k -f -s -S "${url}" -o "${dest}"`, { stdio: 'inherit' });
 		} catch (err) {
 			console.error(`❌ Failed to download ${file}. Make sure you have an internet connection.`);
 			process.exit(1);

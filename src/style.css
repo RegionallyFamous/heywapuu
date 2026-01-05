@@ -221,6 +221,14 @@
 	transform: scale(1.05);
 }
 
+#hey-wapuu-root .hw-help-btn:disabled,
+#hey-wapuu-root .hw-clear-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+	transform: none !important;
+	background: rgba(255,255,255,0.05);
+}
+
 #hey-wapuu-root .hw-close-btn {
 	font-size: 24px;
 	padding-bottom: 3px; /* Optical adjustment for the × character */
@@ -428,6 +436,33 @@
 #hey-wapuu-root .hw-send-btn:hover {
 	background: var(--hw-primary);
 	transform: scale(1.05) rotate(5deg);
+}
+
+/* --- LOADING PROGRESS --- */
+#hey-wapuu-root .hw-progress-container {
+	height: 4px;
+	background: rgba(0,0,0,0.1);
+	width: 100%;
+	position: relative;
+	overflow: hidden;
+}
+
+#hey-wapuu-root .hw-progress-bar {
+	height: 100%;
+	background: var(--hw-yellow);
+	transition: width 0.3s ease;
+	box-shadow: 0 0 10px rgba(255, 206, 0, 0.5);
+}
+
+#hey-wapuu-root .hw-input-area.is-disabled {
+	opacity: 0.6;
+	pointer-events: none;
+	background: #fcfcfc;
+}
+
+#hey-wapuu-root .hw-input-area.is-disabled input {
+	background: #f0f0f1 !important;
+	cursor: not-allowed;
 }
 
 #hey-wapuu-root .hw-thinking span {
