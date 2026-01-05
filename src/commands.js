@@ -14,16 +14,16 @@ const __ = ( text, domain ) => {
 };
 
 /**
- * Hey Wapuu Conversational Registry - The "Wonder" Edition
+ * Hey Wapuu Conversational Registry - Professional Edition
  */
 
 export const commands = [
 	// --- POSTS & PAGES ---
 	{
 		id: 'core/add-new-post',
-		label: __( 'Start a new storybook! ✍️', 'hey-wapuu' ),
+		label: __( 'Create a new post', 'hey-wapuu' ),
 		explanation: __(
-			'I can open a fresh page so we can start writing our next big adventure! 📖✨',
+			'Open the editor to start a new blog post.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -40,9 +40,9 @@ export const commands = [
 	},
 	{
 		id: 'core/add-new-page',
-		label: __( 'Build a new secret hideout! 🏠', 'hey-wapuu' ),
+		label: __( 'Create a new page', 'hey-wapuu' ),
 		explanation: __(
-			"I'll take us to the page builder so we can create a whole new place for people to visit! 💎✨",
+			'Open the editor to create a new static page.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -56,9 +56,9 @@ export const commands = [
 	},
 	{
 		id: 'core/manage-posts',
-		label: __( 'Visit our library of stories! 📝', 'hey-wapuu' ),
+		label: __( 'Manage all posts', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you every single thing we've ever written together. It's a big collection! 🗂️📚",
+			'View and edit your existing blog posts.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -71,11 +71,8 @@ export const commands = [
 	},
 	{
 		id: 'core/manage-categories',
-		label: __( 'Sort our stories into folders! 📁', 'hey-wapuu' ),
-		explanation: __(
-			"I'll help you organize our stories into different categories so they're easy to find! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage categories', 'hey-wapuu' ),
+		explanation: __( 'Organize your posts into categories.', 'hey-wapuu' ),
 		descriptions: [
 			'manage categories',
 			'edit categories',
@@ -85,19 +82,16 @@ export const commands = [
 	},
 	{
 		id: 'core/manage-tags',
-		label: __( 'Add some sticky labels! 🏷️', 'hey-wapuu' ),
-		explanation: __(
-			"I'll help you add tags to our stories so we can label them with magic words! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage tags', 'hey-wapuu' ),
+		explanation: __( 'Organize your posts using tags.', 'hey-wapuu' ),
 		descriptions: [ 'manage tags', 'edit tags', 'post tags' ],
 		url: 'edit-tags.php?taxonomy=post_tag',
 	},
 	{
 		id: 'core/manage-pages',
-		label: __( 'Check out our secret hideouts! 🏠', 'hey-wapuu' ),
+		label: __( 'Manage all pages', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you all the different places we've built on our site! 🗺️✨",
+			'View and edit your existing static pages.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -112,9 +106,9 @@ export const commands = [
 	// --- MEDIA ---
 	{
 		id: 'core/open-media-library',
-		label: __( 'Open our magic treasure chest! 🖼️', 'hey-wapuu' ),
+		label: __( 'Open media library', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you all our pictures, videos, and secrets we've tucked away! 💎✨",
+			'View and manage your images, videos, and files.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -129,9 +123,9 @@ export const commands = [
 	},
 	{
 		id: 'core/add-new-media',
-		label: __( 'Add something new to the chest! 📤', 'hey-wapuu' ),
+		label: __( 'Add new media', 'hey-wapuu' ),
 		explanation: __(
-			'I can help you upload a new photo or a cool video to our collection! 📸✨',
+			'Upload new files to your media library.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -147,9 +141,9 @@ export const commands = [
 	// --- APPEARANCE ---
 	{
 		id: 'core/open-appearance-themes',
-		label: __( 'Pick out a new outfit! 👗', 'hey-wapuu' ),
+		label: __( 'Manage themes', 'hey-wapuu' ),
 		explanation: __(
-			'I can show you all the different ways we can dress up our site today! 🎨✨',
+			'Change the appearance and design of your site.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -163,9 +157,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-site-editor',
-		label: __( 'Go to the master workshop! 🛠️', 'hey-wapuu' ),
+		label: __( 'Open site editor', 'hey-wapuu' ),
 		explanation: __(
-			"I'll take you to the big editor where we can change how everything looks at once! 🏛️✨",
+			'Edit your site layout and design globally.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -179,19 +173,16 @@ export const commands = [
 	},
 	{
 		id: 'core/open-navigation',
-		label: __( 'Fix our navigation map! 🧭', 'hey-wapuu' ),
-		explanation: __(
-			"I'll take you to the navigation settings in the workshop! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage navigation', 'hey-wapuu' ),
+		explanation: __( 'Edit your site menus and navigation.', 'hey-wapuu' ),
 		descriptions: [ 'edit navigation', 'change menus', 'site navigation' ],
 		url: 'site-editor.php?path=%2Fnavigation',
 	},
 	{
 		id: 'core/open-styles',
-		label: __( "Change our site's colors and clothes! 🎨", 'hey-wapuu' ),
+		label: __( 'Edit site styles', 'hey-wapuu' ),
 		explanation: __(
-			"I'll open the Styles menu where we can change colors, fonts, and more! ✨",
+			'Change global colors, fonts, and styles.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -204,11 +195,8 @@ export const commands = [
 	},
 	{
 		id: 'core/open-templates',
-		label: __( 'See all our magic blueprints! 📐', 'hey-wapuu' ),
-		explanation: __(
-			"I'll show you the templates we use to build our pages! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage templates', 'hey-wapuu' ),
+		explanation: __( 'Edit page and post templates.', 'hey-wapuu' ),
 		descriptions: [
 			'show templates',
 			'manage blueprints',
@@ -218,9 +206,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-template-parts',
-		label: __( 'Check out our building blocks! 🧱', 'hey-wapuu' ),
+		label: __( 'Manage template parts', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you the parts we use to build our site, like headers and footers! ✨",
+			'Edit headers, footers, and other template components.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'show template parts', 'edit header', 'edit footer' ],
@@ -228,9 +216,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-patterns',
-		label: __( 'Look at our magic patterns! 💠', 'hey-wapuu' ),
+		label: __( 'Manage patterns', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you all the patterns we can use to build beautiful pages fast! ✨",
+			'Create and manage reusable block patterns.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'manage patterns', 'show patterns', 'reusable blocks' ],
@@ -238,11 +226,8 @@ export const commands = [
 	},
 	{
 		id: 'core/open-appearance-menus',
-		label: __( 'Fix our treasure map! 🗺️', 'hey-wapuu' ),
-		explanation: __(
-			"I'll help you change the menus so our friends always find their way! 🧭✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage menus', 'hey-wapuu' ),
+		explanation: __( 'Edit your navigation menus.', 'hey-wapuu' ),
 		descriptions: [
 			'change menu',
 			'edit navigation',
@@ -253,9 +238,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-appearance-widgets',
-		label: __( 'Add some gadgets to the sidebar! 🔌', 'hey-wapuu' ),
+		label: __( 'Manage widgets', 'hey-wapuu' ),
 		explanation: __(
-			'I can help you add little magic boxes and helpers to the sides of our pages! 🛠️✨',
+			'Edit sidebars and footers using widgets.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -268,9 +253,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-appearance-customizer',
-		label: __( 'Paint and polish our site! 🎨', 'hey-wapuu' ),
+		label: __( 'Open customizer', 'hey-wapuu' ),
 		explanation: __(
-			"I'll take you to the magic mirror where we can see changes as we make them! ✨🪞",
+			'Customize your site appearance with live preview.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -285,11 +270,8 @@ export const commands = [
 	// --- USERS & FRIENDS ---
 	{
 		id: 'core/manage-users',
-		label: __( 'See all our teammates! 👥', 'hey-wapuu' ),
-		explanation: __(
-			"I'll show you everyone who is helping us build this awesome site! 🤝✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage users', 'hey-wapuu' ),
+		explanation: __( 'View and manage all site users.', 'hey-wapuu' ),
 		descriptions: [
 			'show users',
 			'view team',
@@ -300,9 +282,9 @@ export const commands = [
 	},
 	{
 		id: 'core/add-new-user',
-		label: __( 'Invite a new friend! ➕', 'hey-wapuu' ),
+		label: __( 'Add new user', 'hey-wapuu' ),
 		explanation: __(
-			'I can help you add someone new to our team so they can help us too! 👤✨',
+			'Create a new user account for your site.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -315,9 +297,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-user-profile',
-		label: __( 'Look in the magic mirror! 🪞', 'hey-wapuu' ),
+		label: __( 'Edit my profile', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you your own profile so you can change your name or picture! ✨",
+			'Manage your personal account settings.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -331,11 +313,8 @@ export const commands = [
 	},
 	{
 		id: 'core/manage-comments',
-		label: __( 'Read our mail from friends! 💬', 'hey-wapuu' ),
-		explanation: __(
-			"I'll take us to see all the nice things people are saying about our work! 💖✨",
-			'hey-wapuu'
-		),
+		label: __( 'Manage comments', 'hey-wapuu' ),
+		explanation: __( 'View and moderate site comments.', 'hey-wapuu' ),
 		descriptions: [
 			'show comments',
 			'see feedback',
@@ -348,9 +327,9 @@ export const commands = [
 	// --- TOOLS & PLUGINS ---
 	{
 		id: 'core/open-plugins',
-		label: __( 'Get some new superpowers! 🦸‍♂️', 'hey-wapuu' ),
+		label: __( 'Manage plugins', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you all the extra tools we can plug in to make our site even better! ⚡✨",
+			'View and manage your installed plugins.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -363,19 +342,16 @@ export const commands = [
 	},
 	{
 		id: 'core/add-new-plugin',
-		label: __( 'Find a brand new superpower! ➕🦸‍♂️', 'hey-wapuu' ),
-		explanation: __(
-			"I'll take you to the plugin store where we can find new magic tools! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Add new plugin', 'hey-wapuu' ),
+		explanation: __( 'Search for and install new plugins.', 'hey-wapuu' ),
 		descriptions: [ 'install plugin', 'search plugins', 'add new plugin' ],
 		url: 'plugin-install.php',
 	},
 	{
 		id: 'core/open-settings-general',
-		label: __( "Change our site's name! 🏷️", 'hey-wapuu' ),
+		label: __( 'General settings', 'hey-wapuu' ),
 		explanation: __(
-			'I can take you to the main control room to change the basics! ⚙️✨',
+			'Manage core site settings and information.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -388,9 +364,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-settings-writing',
-		label: __( 'Fix our writing desk! ✍️', 'hey-wapuu' ),
+		label: __( 'Writing settings', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you set up how we write our stories! 🖋️✨",
+			'Manage settings related to post creation.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -402,9 +378,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-settings-reading',
-		label: __( 'Set up our reading room! 📖', 'hey-wapuu' ),
+		label: __( 'Reading settings', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you decide how people see our stories on the front page! 👀✨",
+			'Manage how content is displayed to visitors.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -416,9 +392,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-settings-discussion',
-		label: __( 'Manage our chat rules! 💬', 'hey-wapuu' ),
+		label: __( 'Discussion settings', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you set the rules for how friends can talk to us! 🗣️✨",
+			'Manage comment settings and moderation rules.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'discussion settings', 'comment rules', 'avatars' ],
@@ -426,9 +402,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-settings-media',
-		label: __( 'Organize our photo studio! 📸', 'hey-wapuu' ),
+		label: __( 'Media settings', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you set up how we store our pictures and videos! ✨",
+			'Manage image sizes and upload organization.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'media settings', 'image sizes', 'organize uploads' ],
@@ -436,19 +412,16 @@ export const commands = [
 	},
 	{
 		id: 'core/open-settings-permalinks',
-		label: __( 'Fix our magic addresses! 🔗', 'hey-wapuu' ),
-		explanation: __(
-			"I'll help you make our web addresses look pretty and easy to find! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Permalink settings', 'hey-wapuu' ),
+		explanation: __( 'Manage URL structure for your site.', 'hey-wapuu' ),
 		descriptions: [ 'permalink settings', 'change urls', 'link structure' ],
 		url: 'options-permalink.php',
 	},
 	{
 		id: 'core/open-settings-privacy',
-		label: __( 'Keep our secrets safe! 🤫', 'hey-wapuu' ),
+		label: __( 'Privacy settings', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you set up our privacy policy and keep our friends safe! ✨",
+			'Manage your privacy policy and data settings.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'privacy settings', 'privacy policy' ],
@@ -456,9 +429,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-tools-available',
-		label: __( 'See our box of magic tricks! 🪄', 'hey-wapuu' ),
+		label: __( 'Available tools', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you all the extra tools we have available to use! ✨",
+			'View additional tools available for your site.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'available tools', 'show all tools' ],
@@ -466,11 +439,8 @@ export const commands = [
 	},
 	{
 		id: 'core/open-tools-site-health',
-		label: __( 'Give our site a check-up! 🩺', 'hey-wapuu' ),
-		explanation: __(
-			"I'll check if our site is feeling strong or if it needs some magic medicine! 🏥✨",
-			'hey-wapuu'
-		),
+		label: __( 'Site health', 'hey-wapuu' ),
+		explanation: __( 'Check your site health and status.', 'hey-wapuu' ),
 		descriptions: [
 			'site health',
 			'is my site okay',
@@ -480,9 +450,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-tools-export',
-		label: __( 'Pack our bags for an adventure! 🎒', 'hey-wapuu' ),
+		label: __( 'Export content', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you export our stories and treasures so we can take them somewhere new! 🚀✨",
+			'Export your site content to an XML file.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -495,11 +465,8 @@ export const commands = [
 	},
 	{
 		id: 'core/open-tools-import',
-		label: __( 'Welcome new friends and stories! 📥', 'hey-wapuu' ),
-		explanation: __(
-			"I'll help you bring in new treasures and stories from other worlds! 🌟✨",
-			'hey-wapuu'
-		),
+		label: __( 'Import content', 'hey-wapuu' ),
+		explanation: __( 'Import content from other sites.', 'hey-wapuu' ),
 		descriptions: [
 			'import content',
 			'upload site data',
@@ -509,9 +476,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-tools-export-personal-data',
-		label: __( 'Share our personal story! 👤', 'hey-wapuu' ),
+		label: __( 'Export personal data', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you export personal data if a friend asks for it! ✨",
+			'Export personal data for a specific user.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'export personal data', 'privacy export' ],
@@ -519,9 +486,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-tools-erase-personal-data',
-		label: __( 'Clear our secret diaries! 🧹', 'hey-wapuu' ),
+		label: __( 'Erase personal data', 'hey-wapuu' ),
 		explanation: __(
-			"I'll help you erase personal data if a friend asks to be forgotten! ✨",
+			'Erase personal data for a specific user.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'erase personal data', 'privacy erase' ],
@@ -529,9 +496,9 @@ export const commands = [
 	},
 	{
 		id: 'core/open-updates',
-		label: __( 'Get some fresh magic! 🔄', 'hey-wapuu' ),
+		label: __( 'Check for updates', 'hey-wapuu' ),
 		explanation: __(
-			"I'll check if there are any new versions of WordPress or our tools! ✨🆙",
+			'Check for WordPress core, plugin, and theme updates.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -546,9 +513,9 @@ export const commands = [
 	// --- EDITOR MAGIC ---
 	{
 		id: 'core/toggle-distraction-free',
-		label: __( 'Make everything disappear! 🪄', 'hey-wapuu' ),
+		label: __( 'Distraction-free mode', 'hey-wapuu' ),
 		explanation: __(
-			"I'll hide all the buttons so it's just you and your story! ✨🌬️",
+			'Hide editor sidebars and toolbars for focused writing.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -560,9 +527,9 @@ export const commands = [
 	},
 	{
 		id: 'core/toggle-spotlight-mode',
-		label: __( 'Turn on the spotlight! 🔦', 'hey-wapuu' ),
+		label: __( 'Spotlight mode', 'hey-wapuu' ),
 		explanation: __(
-			"I'll highlight just the block we're working on right now! 🌟✨",
+			'Focus on the currently selected block.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -573,9 +540,9 @@ export const commands = [
 	},
 	{
 		id: 'core/toggle-list-view',
-		label: __( 'Show our story map! 🗺️', 'hey-wapuu' ),
+		label: __( 'Show list view', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you a list of all the blocks we've used to build our page! 🗂️✨",
+			'View the hierarchical structure of your blocks.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -587,45 +554,39 @@ export const commands = [
 	},
 	{
 		id: 'core/toggle-fullscreen-mode',
-		label: __( 'Go full screen! 📺', 'hey-wapuu' ),
-		explanation: __(
-			"I'll make the editor fill the whole screen so we can focus! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Fullscreen mode', 'hey-wapuu' ),
+		explanation: __( 'Toggle fullscreen editing mode.', 'hey-wapuu' ),
 		descriptions: [ 'fullscreen mode', 'max editor', 'big screen' ],
 	},
 	{
 		id: 'core/toggle-feature-welcome-guide',
-		label: __( 'See the welcome guide! 👋', 'hey-wapuu' ),
-		explanation: __(
-			"I'll show you the welcome guide again so you can learn the basics! ✨",
-			'hey-wapuu'
-		),
+		label: __( 'Welcome guide', 'hey-wapuu' ),
+		explanation: __( 'Open the editor welcome guide.', 'hey-wapuu' ),
 		descriptions: [ 'welcome guide', 'how to use editor', 'tutorial' ],
 	},
 	{
 		id: 'core/toggle-fixed-toolbar',
-		label: __( 'Stick the toolbar to the top! 📎', 'hey-wapuu' ),
+		label: __( 'Fixed toolbar', 'hey-wapuu' ),
 		explanation: __(
-			"I'll keep the toolbar at the top of the screen so it's always there! ✨",
+			'Fix the block toolbar to the top of the editor.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'fixed toolbar', 'top toolbar' ],
 	},
 	{
 		id: 'core/open-preferences',
-		label: __( 'Change our editor rules! ⚙️', 'hey-wapuu' ),
+		label: __( 'Editor preferences', 'hey-wapuu' ),
 		explanation: __(
-			"I'll open the preferences so you can change how the editor works! ✨",
+			'Manage your editor settings and preferences.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'editor preferences', 'change settings' ],
 	},
 	{
 		id: 'core/open-keyboard-shortcuts',
-		label: __( 'Learn magic keyboard spells! ⌨️', 'hey-wapuu' ),
+		label: __( 'Keyboard shortcuts', 'hey-wapuu' ),
 		explanation: __(
-			"I'll show you all the keyboard shortcuts you can use! ✨",
+			'View a list of available keyboard shortcuts.',
 			'hey-wapuu'
 		),
 		descriptions: [ 'keyboard shortcuts', 'hotkeys' ],
@@ -634,9 +595,9 @@ export const commands = [
 	// --- FUN & SYSTEM ---
 	{
 		id: 'core/open-dashboard',
-		label: __( 'Head back to headquarters! 🖐️', 'hey-wapuu' ),
+		label: __( 'Go to dashboard', 'hey-wapuu' ),
 		explanation: __(
-			"I'll take us back home to our main command center! 🚀✨",
+			'Return to the main WordPress dashboard.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -650,9 +611,9 @@ export const commands = [
 	},
 	{
 		id: 'core/view-site',
-		label: __( 'Go look at our world! 🌍', 'hey-wapuu' ),
+		label: __( 'View site', 'hey-wapuu' ),
 		explanation: __(
-			"I'll take us to the front so we can see what everyone else sees! 🚀✨",
+			'View the public front-end of your site.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -666,9 +627,9 @@ export const commands = [
 	},
 	{
 		id: 'wapuu/tell-joke',
-		label: __( 'Hear a funny joke! 😂', 'hey-wapuu' ),
+		label: __( 'Tell a joke', 'hey-wapuu' ),
 		explanation: __(
-			'I have some super-funny jokes that will make you giggle! 😆✨',
+			'I can tell you a WordPress-related joke.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -680,11 +641,8 @@ export const commands = [
 	},
 	{
 		id: 'wapuu/who-are-you',
-		label: __( 'Learn all about me! 💛', 'hey-wapuu' ),
-		explanation: __(
-			'I can tell you the secret story of how I became the mascot of WordPress! ✨',
-			'hey-wapuu'
-		),
+		label: __( 'About me', 'hey-wapuu' ),
+		explanation: __( 'Learn more about who I am.', 'hey-wapuu' ),
 		descriptions: [
 			'who are you',
 			'what is a wapuu',
@@ -694,9 +652,9 @@ export const commands = [
 	},
 	{
 		id: 'wapuu/sing-song',
-		label: __( 'Hear me sing! 🎶', 'hey-wapuu' ),
+		label: __( 'Sing a song', 'hey-wapuu' ),
 		explanation: __(
-			"I've been practicing a special WordPress song just for you! 🎤✨",
+			'I can sing a short song about WordPress.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -709,19 +667,16 @@ export const commands = [
 	},
 	{
 		id: 'wapuu/why-warm-up',
-		label: __( 'Why are you warming up? 🧠', 'hey-wapuu' ),
-		explanation: __(
-			'I can explain how my big brain works! ✨',
-			'hey-wapuu'
-		),
+		label: __( 'Warming up', 'hey-wapuu' ),
+		explanation: __( 'Learn why I need to warm up my brain.', 'hey-wapuu' ),
 		descriptions: [ 'why', 'why are you warming up', 'what are you doing' ],
 		action: 'why',
 	},
 	{
 		id: 'wapuu/how-to-build',
-		label: __( 'How do I build a site? 🏗️', 'hey-wapuu' ),
+		label: __( 'Building a site', 'hey-wapuu' ),
 		explanation: __(
-			'I can give you my best tips for making an awesome website! ✨',
+			'I can give you tips on building a great site.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -735,9 +690,9 @@ export const commands = [
 	},
 	{
 		id: 'wapuu/what-can-you-do',
-		label: __( 'What else can you do? 🪄', 'hey-wapuu' ),
+		label: __( 'Help', 'hey-wapuu' ),
 		explanation: __(
-			'I can show you all the magic spells I know! ✨',
+			'See a list of all commands I can help with.',
 			'hey-wapuu'
 		),
 		descriptions: [
@@ -751,9 +706,9 @@ export const commands = [
 	},
 	{
 		id: 'wapuu/site-status',
-		label: __( 'How is our site doing? 🩺', 'hey-wapuu' ),
+		label: __( 'Site status', 'hey-wapuu' ),
 		explanation: __(
-			"I'll give you a quick check-up of our magic world! ✨",
+			'Get a quick overview of your site status.',
 			'hey-wapuu'
 		),
 		descriptions: [

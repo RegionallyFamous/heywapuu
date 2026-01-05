@@ -4,7 +4,7 @@ Tags: assistant, chat, command palette, nlu, search
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.6
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,7 +32,23 @@ WordPress 6.3 and higher are required for full compatibility with the Command Pa
 
 == Changelog ==
 
-= 1.6.6 =
+= 1.8.0 =
+* Monolith Refactor: Completely overhauled the plugin architecture. The 1,800+ line monolith has been broken down into modular hooks and components for better maintainability and future-proofing.
+* Modular Architecture: Introduced `src/hooks/`, `src/components/`, and `src/utils/` to separate concerns.
+* Stability Fixes: Improved hook dependency management and fixed all linter warnings.
+
+= 1.7.1 =
+* Professional Tone: Refactored all text to be more concise and professional.
+* Emoji Removal: Removed all emojis from the interface and AI responses.
+* Confetti Removal: Removed the celebration confetti effect.
+* UI Cleanup: Simplified action cards and icons.
+
+= 1.7.0 =
+* UI State Machine: Implemented a robust state machine for UI modes (IDLE, SEARCHING, RESULTS, THINKING).
+* Persistent Button Tray: Decoupled action buttons from text input to ensure they remain visible until an action is taken.
+* Structural Stability: Major refactoring of the main component to prevent state collisions.
+
+= 1.6.9 =
 * FIXED: Corrected author name to Regionally Famous.
 * IMPROVED: UI layout for suggestion buttons - moved to a fixed tray for better visibility.
 * IMPROVED: AI query logic to prevent redundant message generation during live search.

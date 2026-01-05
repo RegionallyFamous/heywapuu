@@ -411,35 +411,6 @@
 	50% { opacity: 0; }
 }
 
-/* --- MAGIC PARTICLES & CONFETTI --- */
-.hw-particle {
-	position: fixed;
-	pointer-events: none;
-	z-index: 1000000;
-	font-size: 24px;
-	animation: hw-particle-float 1.2s ease-out forwards;
-}
-
-@keyframes hw-particle-float {
-	0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
-	100% { transform: translate(var(--tw-x), var(--tw-y)) scale(0) rotate(var(--tw-r)); opacity: 0; }
-}
-
-.hw-confetti {
-	position: fixed;
-	width: 10px;
-	height: 10px;
-	background: var(--hw-primary);
-	z-index: 1000000;
-	pointer-events: none;
-	animation: hw-confetti-fall 3s ease-out forwards;
-}
-
-@keyframes hw-confetti-fall {
-	0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-	100% { transform: translate(var(--tw-x), 100vh) rotate(var(--tw-r)); opacity: 0; }
-}
-
 #hey-wapuu-root .hw-bubble-ai em {
 	font-style: italic;
 	opacity: 0.8;
