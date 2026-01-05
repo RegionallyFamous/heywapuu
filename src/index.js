@@ -666,7 +666,7 @@ const WapuuChatApp = () => {
 				sprintf(
 					/* translators: 1: time greeting (e.g. Good morning), 2: user first name, 3: site name, 4: contextual note */
 					__(
-						"%1$s, %2$s! 💛 I'm so happy to see you! What should we build on **%3$s** today?%4$s",
+						"%1$s, %2$s! 💛 I'm so happy to see you! What should we build on **%3$s** today? %4$s",
 						'hey-wapuu'
 					),
 					timeGreeting,
@@ -677,7 +677,7 @@ const WapuuChatApp = () => {
 				sprintf(
 					/* translators: 1: user first name, 2: site name, 3: contextual note */
 					__(
-						'Hi %1$s! 👋 I was just thinking about **%2$s**. Want to make it even better together?%3$s',
+						'Hi %1$s! 👋 I was just thinking about **%2$s**. Want to make it even better together? %3$s',
 						'hey-wapuu'
 					),
 					user.firstName,
@@ -687,7 +687,7 @@ const WapuuChatApp = () => {
 				sprintf(
 					/* translators: 1: user first name, 2: site name, 3: contextual note */
 					__(
-						'Ooh, %1$s is here! 🌟 Ready to do some magic on **%2$s**?%3$s',
+						'Ooh, %1$s is here! 🌟 Ready to do some magic on **%2$s**? %3$s',
 						'hey-wapuu'
 					),
 					user.firstName,

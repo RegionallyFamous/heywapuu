@@ -4,7 +4,7 @@ Tags: assistant, chat, command palette, nlu, search
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,9 @@ No! All processing happens locally in your browser using Transformers.js.
 WordPress 6.3 and higher are required for full compatibility with the Command Palette API.
 
 == Changelog ==
+
+= 1.0.3 =
+* Fixed spacing in initial greeting messages.
 
 = 1.0.2 =
 * Optimized model for mobile devices (switched to quantized version).
