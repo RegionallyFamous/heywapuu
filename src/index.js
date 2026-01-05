@@ -1271,8 +1271,8 @@ const WapuuChatApp = () => {
 			setWorkerStatus( 'initializing' );
 
 			try {
-				// Use the clean URL without query strings for better compatibility
-				const workerUrl = heyWapuuConfig.workerUrl.split( '?' )[ 0 ];
+				// Use the versioned URL for cache busting
+				const workerUrl = heyWapuuConfig.workerUrl;
 				workerRef.current = new Worker( workerUrl, { type: 'module' } );
 
 				workerRef.current.postMessage( {

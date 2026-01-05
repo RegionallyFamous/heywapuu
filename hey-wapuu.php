@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Hey Wapuu
  * Description: Natural language search for the WordPress Command Palette.
- * Version: 1.6.2
- * Author: Regionally Famous
+ * Version: 1.6.4
+ * Author: Nick Diego
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: hey-wapuu
