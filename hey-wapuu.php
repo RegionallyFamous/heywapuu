@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hey Wapuu
  * Description: Natural language search for the WordPress Command Palette.
- * Version: 1.6.0
+ * Version: 1.6.2
  * Author: Regionally Famous
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,9 +130,10 @@ function hey_wapuu_enqueue_assets() {
 
 	// Add resource hints for performance
 	add_action( 'admin_head', function() use ( $config ) {
-		echo '<link rel="preload" href="' . esc_url( $config['workerUrl'] ) . '" as="worker" crossorigin="anonymous">' . "\n";
+		// Use 'script' instead of 'worker' for wider browser support in preload
+		echo '<link rel="preload" href="' . esc_url( $config['workerUrl'] ) . '" as="script" crossorigin="anonymous">' . "\n";
 		echo '<link rel="preload" href="' . esc_url( $config['embeddingsUrl'] ) . '" as="fetch" crossorigin="anonymous">' . "\n";
-		// Preload the most important model file (the quantized weights)
+		// Preload the quantized weights (the largest file)
 		echo '<link rel="preload" href="' . esc_url( $config['modelUrl'] . 'all-MiniLM-L6-v2/onnx/model_quantized.onnx' ) . '" as="fetch" crossorigin="anonymous">' . "\n";
 	} );
 }

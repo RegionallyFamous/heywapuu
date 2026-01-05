@@ -494,8 +494,16 @@ const WapuuChatApp = () => {
 				'https://s3.amazonaws.com/freecodecamp/drums/Give_us_a_light.mp3'
 			);
 			audio.volume = 0.05;
-			audio.play();
-		} catch ( e ) {}
+			// Safely handle browser audio blocking
+			const playPromise = audio.play();
+			if ( playPromise !== undefined ) {
+				playPromise.catch( () => {
+					// Interaction required - fail silently
+				} );
+			}
+		} catch ( e ) {
+			// Fail silently
+		}
 	}, [] );
 
 	/**
@@ -1229,7 +1237,8 @@ const WapuuChatApp = () => {
 				: null;
 
 		const initWorker = () => {
-			if ( workerStatus !== 'idle' || ! window.Worker ) {
+			// CRITICAL: Check the ref directly to avoid dependency loops
+			if ( workerRef.current || ! window.Worker ) {
 				return;
 			}
 
@@ -1261,7 +1270,7 @@ const WapuuChatApp = () => {
 						// SYNC: Notify other tabs
 						channel?.postMessage( { type: 'ready' } );
 
-						const screenContext = getScreenContextRef.current();
+						const screenContext = getScreenContext();
 						translatedMessage = sprintf(
 							/* translators: %s: screen name */
 							__(
@@ -1272,7 +1281,7 @@ const WapuuChatApp = () => {
 						);
 					} else if ( data.status === 'loading' ) {
 						setWorkerStatus( 'loading' );
-						translatedMessage = __(
+						translatedMessage = data.message || __(
 							"I'm opening my big book of WordPress magic! 📖✨",
 							'hey-wapuu'
 						);
@@ -1476,10 +1485,13 @@ const WapuuChatApp = () => {
 		return () => {
 			if ( workerRef.current ) {
 				workerRef.current.terminate();
+				workerRef.current = null;
 			}
 			channel?.close();
 		};
-	}, [ workerStatus, getScreenContext ] );
+		// Only run once on mount
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [] );
 
 	// Proactive suggestions based on context
 	useEffect( () => {

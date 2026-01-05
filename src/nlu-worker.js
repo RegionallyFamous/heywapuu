@@ -84,10 +84,10 @@ self.onmessage = async ( event ) => {
 /**
  * Initialize the ML brain with Network Resilience
  *
- * @param {string} embeddingsUrl
- * @param {string} modelUrl
- * @param {string} version
- * @param {number} attempt
+ * @param {string} embeddingsUrl URL to the embeddings file.
+ * @param {string} modelUrl      URL to the model folder.
+ * @param {string} version       Plugin version.
+ * @param {number} attempt       Current attempt count.
  */
 async function initWorker( embeddingsUrl, modelUrl, version, attempt = 0 ) {
 	const maxAttempts = 3;
@@ -96,14 +96,7 @@ async function initWorker( embeddingsUrl, modelUrl, version, attempt = 0 ) {
 	self.lastModelUrl = modelUrl;
 
 	try {
-		// TAB SYNC: Use WebLocks to ensure only one tab handles heavy init at a time
-		if ( navigator.locks ) {
-			await navigator.locks.request( 'hey_wapuu_init', async () => {
-				await performInit( embeddingsUrl, modelUrl );
-			} );
-		} else {
-			await performInit( embeddingsUrl, modelUrl );
-		}
+		await performInit( embeddingsUrl, modelUrl );
 	} catch ( error ) {
 		console.error( `Worker Init Error (Attempt ${ attempt + 1 }):`, error );
 
