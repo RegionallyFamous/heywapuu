@@ -4,7 +4,7 @@ Tags: assistant, chat, command palette, nlu, search
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,13 @@ No! All processing happens locally in your browser using Transformers.js.
 WordPress 6.3 and higher are required for full compatibility with the Command Palette API.
 
 == Changelog ==
+
+= 1.0.2 =
+* Optimized model for mobile devices (switched to quantized version).
+* Added visual loading progress bar.
+* Improved keyboard shortcuts (Alt+W/Option+W) and focus management.
+* Enhanced cache-busting for development environments.
+* Refactored worker initialization for better reliability.
 
 = 1.0.0 =
 * Initial release. Conversational chat interface with local NLU.

@@ -783,39 +783,67 @@ const WapuuChatApp = () => {
 	// Global Keyboard Listeners
 	useEffect( () => {
 		const handleKeyDown = ( e ) => {
-			if ( e.altKey && e.key.toLowerCase() === 'w' ) {
+			// Toggle with Alt+W (standard) or Ctrl+W (non-Mac)
+			// Using e.code 'KeyW' is more robust for physical key mapping
+			if ( ( e.altKey || ( e.ctrlKey && ! e.metaKey ) ) && e.code === 'KeyW' ) {
 				setIsOpen( ( prev ) => ! prev );
 				e.preventDefault();
+				e.stopPropagation();
+				return;
 			}
-			if ( e.key === 'Escape' ) {
-				setIsOpen( false );
-				summonerRef.current?.focus();
-			}
-			// Tab Trap
-			if ( isOpen && e.key === 'Tab' && chatWindowRef.current ) {
-				const focusable =
-					chatWindowRef.current.querySelectorAll( 'button, input' );
-				if ( focusable.length === 0 ) {
+
+			if ( isOpen ) {
+				// Close on Escape
+				if ( e.key === 'Escape' ) {
+					setIsOpen( false );
+					e.preventDefault();
+					e.stopPropagation();
+					summonerRef.current?.focus();
 					return;
 				}
-				const first = focusable[ 0 ];
-				const last = focusable[ focusable.length - 1 ];
-				const activeElement =
-					chatWindowRef.current.ownerDocument.activeElement;
-				if ( e.shiftKey && activeElement === first ) {
-					last.focus();
-					e.preventDefault();
-				} else if ( ! e.shiftKey && activeElement === last ) {
-					first.focus();
-					e.preventDefault();
+
+				// Tab Trap
+				if ( e.key === 'Tab' && chatWindowRef.current ) {
+					const focusableElements = chatWindowRef.current.querySelectorAll(
+						'button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
+					);
+					const focusable = Array.from( focusableElements );
+
+					if ( focusable.length === 0 ) {
+						return;
+					}
+
+					const first = focusable[ 0 ];
+					const last = focusable[ focusable.length - 1 ];
+					const activeElement = document.activeElement;
+
+					if ( e.shiftKey && activeElement === first ) {
+						last.focus();
+						e.preventDefault();
+						e.stopPropagation();
+					} else if ( ! e.shiftKey && activeElement === last ) {
+						first.focus();
+						e.preventDefault();
+						e.stopPropagation();
+					}
 				}
 			}
 		};
-		window.addEventListener( 'keydown', handleKeyDown );
+
+		// Use capture phase (true) to ensure we catch these before other WP listeners
+		window.addEventListener( 'keydown', handleKeyDown, true );
+		return () =>
+			window.removeEventListener( 'keydown', handleKeyDown, true );
+	}, [ isOpen ] );
+
+	// Auto-focus input when opened
+	useEffect( () => {
 		if ( isOpen ) {
-			setTimeout( () => inputRef.current?.focus(), 50 );
+			const timer = setTimeout( () => {
+				inputRef.current?.focus();
+			}, 100 );
+			return () => clearTimeout( timer );
 		}
-		return () => window.removeEventListener( 'keydown', handleKeyDown );
 	}, [ isOpen ] );
 
 	// Web Worker Lifecycle
